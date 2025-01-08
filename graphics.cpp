@@ -1,0 +1,163 @@
+#include "graphics.h"
+
+Element::Element(TFT_eSPI* tft, OpenFontRender* fontRender, const coordinates_t& coordinates)
+{
+  m_tft = tft;
+  m_fontRender = fontRender;
+  m_coordinates = coordinates;
+  m_hidden = false;
+  m_updateCallback = nullptr;
+  m_onPress = nullptr;
+  m_onClick = nullptr;
+  m_onHold = nullptr;
+}
+
+coordinates_t Element::getCoordinates()
+{
+  return m_coordinates;
+}
+
+bounds_t Element::getBounds()
+{
+  return {m_coordinates.x, m_coordinates.y, m_coordinates.w + m_coordinates.x, m_coordinates.h + m_coordinates.y};
+}
+
+bool Element::checkHit(uint x, uint y)
+{
+  bounds_t bounds = getBounds();
+  return x >= bounds.left && x <= bounds.right && y >= bounds.top && y <= bounds.bottom;
+}
+
+void Element::setUpdateCallback(void (*updateCallback)(const State&, Element*))
+{
+  m_updateCallback = updateCallback;
+}
+
+void Element::setOnPressCallback(void (*onPressCallback)(State&, Element*))
+{
+  m_onPress = onPressCallback;
+}
+
+void Element::setOnClickCallback(void (*onClickCallback)(State&, Element*))
+{
+  m_onClick = onClickCallback;
+}
+
+void Element::setOnHoldCallback(void (*onHoldCallback)(State&, Element*))
+{
+  m_onHold = onHoldCallback;
+}
+
+void Element::setBackgroundColor(uint32_t color)
+{
+  if(m_backgroundColor != color)
+  {
+    m_backgroundColor = color;
+    m_dirty = true;
+  }
+}
+
+void Element::setBorderColor(uint32_t color)
+{
+  if(m_borderColor != color)
+  {
+    m_borderColor = color;
+    m_dirty = true;
+  }
+}
+
+void Element::setBorderRadius(int32_t radius)
+{
+  if(m_borderRadius != radius)
+  {
+    m_borderRadius = radius;
+    m_dirty = true;
+  }
+}
+
+void Element::update(const State& state)
+{
+  if(!m_updateCallback)
+  {
+    return;
+  }
+  m_updateCallback(state, this);
+}
+
+void Element::onPress(State& state, uint x, uint y)
+{
+  if(!m_onPress|| m_hidden || !checkHit(x, y))
+  {
+    return;
+  }
+  m_onPress(state, this);
+}
+
+void Element::onClick(State& state, uint x, uint y)
+{
+  if(!m_onClick|| m_hidden || !checkHit(x, y))
+  {
+    return;
+  }
+  m_onClick(state, this);
+}
+
+void Element::onHold(State& state, uint x, uint y)
+{
+  if(!m_onHold|| m_hidden || !checkHit(x, y))
+  {
+    return;
+  }
+  m_onHold(state, this);
+}
+
+
+TextElement::TextElement(TFT_eSPI* tft, OpenFontRender* fontRender, const coordinates_t& coordinates) : Element(tft, fontRender, coordinates){}
+
+void TextElement::setText(const String& text)
+{
+  if(m_text != text)
+  {
+    m_text = text;
+    m_dirty = true;
+  }
+}
+
+void TextElement::setTextColor(uint32_t color)
+{
+  if(m_textColor != color)
+  {
+    m_textColor = color;
+    m_dirty = true;
+  }
+}
+
+void TextElement::setFontSize(uint size)
+{
+  if(m_fontSize != size)
+  {
+    m_fontSize = size;
+    m_dirty = true;
+  }
+}
+
+void TextElement::show(bool force)
+{
+  bool shouldUpdate = !m_hidden && (force || m_dirty);
+  if(!shouldUpdate)
+  {
+    return;
+  }
+
+  m_tft->fillRoundRect(m_coordinates.x, m_coordinates.y, m_coordinates.w, m_coordinates.h, m_borderRadius, m_backgroundColor);
+  m_tft->drawRoundRect(m_coordinates.x, m_coordinates.y, m_coordinates.w, m_coordinates.h, m_borderRadius, m_borderColor);
+
+  m_fontRender->setFontColor(m_textColor);
+  m_fontRender->setFontSize(m_fontSize);
+  uint x = m_coordinates.x + (m_coordinates.w - m_fontRender->getTextWidth(m_text.c_str())) / 2;
+  uint y = m_coordinates.y + (m_coordinates.h - m_fontRender->getTextHeight(m_text.c_str())) / 2;
+  m_fontRender->setCursor(x, y);
+  m_fontRender->printf(m_text.c_str());
+  
+  m_dirty = false;
+}

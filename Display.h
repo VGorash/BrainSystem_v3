@@ -13,24 +13,38 @@
 #include <OpenFontRender.h>
 #include <EncButton.h>
 
+#include "State.h"
+#include "graphics.h"
+
 class Display
 {
 public:
-  Display(){}
+  Display();
+  ~Display();
 
   void init();
+
+  void sync(State &state);
   void showGreeting();
-  void processTouchScreen();
+
+private:
+  void initElements();
+
+  TextElement* createTextElement(coordinates_t coordinates);
+  void processTouchscreen(State& state);
 
 private:
   TFT_eSPI m_tft;
   OpenFontRender m_fontRender;
+
   SPIClass m_touchscreenSpi = SPIClass(VSPI);
   XPT2046_Touchscreen m_touchscreen = XPT2046_Touchscreen(XPT2046_CS, XPT2046_IRQ);
-
   VirtButton m_buttonEmulator;
   int m_touchX;
   int m_touchY;
+
+  Element** m_elements;
+  int m_numElements;
 };
 
 #endif
