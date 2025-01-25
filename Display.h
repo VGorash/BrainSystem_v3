@@ -24,14 +24,13 @@ public:
 
   void init();
 
-  void sync(State &state);
-  void showGreeting();
+  void sync(const State &state);
+  void syncTouchscreen(State& state);
 
 private:
   void initElements();
 
   TextElement* createTextElement(coordinates_t coordinates);
-  void processTouchscreen(State& state);
 
 private:
   TFT_eSPI m_tft;

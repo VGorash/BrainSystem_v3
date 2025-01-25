@@ -42,9 +42,8 @@ TextElement* Display::createTextElement(coordinates_t coordinates)
   return e;
 }
 
-void Display::sync(State& state)
+void Display::sync(const State& state)
 {
-  processTouchscreen(state);
   for(int i=0; i<m_numElements; i++)
   {
     m_elements[i]->update(state);
@@ -55,12 +54,7 @@ void Display::sync(State& state)
   }
 }
 
-void Display::showGreeting()
-{
-  m_tft.fillScreen(COMMON_BACKGROUND_COLOR);
-}
-
-void Display::processTouchscreen(State& state)
+void Display::syncTouchscreen(State& state)
 {
   bool touched = m_touchscreen.tirqTouched() && m_touchscreen.touched();
   if(touched)
@@ -98,23 +92,33 @@ void Display::processTouchscreen(State& state)
 void startStopButtonUpdate(const State& state, Element* eRaw)
 {
   TextElement* e = (TextElement*) eRaw;
-  if(state.game.started)
-  {
-    e->setText("Сброс");
-    e->setBackgroundColor(TFT_RED);
-    e->setBorderColor(TFT_RED);
-  }
-  else
+  if(state.game.status == GameStatus::IDLE)
   {
     e->setText("Запуск");
     e->setBackgroundColor(TFT_GREEN);
     e->setBorderColor(TFT_GREEN);
   }
+  else
+  {
+    e->setText("Сброс");
+    e->setBackgroundColor(TFT_RED);
+    e->setBorderColor(TFT_RED);
+  }
 }
 
 void startStopButtonOnClick(State& state, Element* e)
 {
-  state.game.started = !state.game.started;
+  Serial.println("Touch");
+  if(state.game.status == GameStatus::IDLE)
+  {
+    Serial.println("Start command");
+    state.currentCommand = GameCommand::START;
+  }
+  else
+  {
+    Serial.println("Stop command");
+    state.currentCommand = GameCommand::STOP;
+  }
 }
 
 TextElement* setupStartStopButton(TextElement* e)
@@ -129,5 +133,6 @@ TextElement* setupStartStopButton(TextElement* e)
 
 void Display::initElements()
 {
+  m_tft.fillScreen(COMMON_BACKGROUND_COLOR);
   TextElement* startStopButton = setupStartStopButton(createTextElement({20, 200, 440, 100}));
 }

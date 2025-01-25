@@ -1,14 +1,32 @@
 #ifndef STATE_H
 #define STATE_H
 
+enum GameStatus
+{
+  IDLE,
+  COUNTDOWN,
+  PRESSED,
+  FALSTART
+};
+
+enum GameCommand
+{
+  NONE,
+  START,
+  STOP
+};
+
 typedef struct 
 {
-  struct Game
+  struct GameState
   {
-    bool started;
+    GameStatus status = GameStatus::IDLE;
+    int secondsLeft = -1;
   };
 
-  Game game;
+  GameState game;
+  GameCommand currentCommand = GameCommand::NONE;
+
 }State;
 
 #endif
