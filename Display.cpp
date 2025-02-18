@@ -6,6 +6,8 @@
 #define SCREEN_HEIGHT 320
 #define MAX_ELEMENTS 64
 
+static const int playerColors[NUM_PLAYERS] = {TFT_YELLOW, TFT_BLUE, TFT_GREEN, TFT_RED};
+
 Display::Display()
 {
   m_numElements = 0;
@@ -42,7 +44,7 @@ TextElement* Display::createTextElement(coordinates_t coordinates)
   return e;
 }
 
-void Display::sync(const State& state)
+void Display::sync(const DisplayState& state)
 {
   for(int i=0; i<m_numElements; i++)
   {
@@ -54,7 +56,7 @@ void Display::sync(const State& state)
   }
 }
 
-void Display::syncTouchscreen(State& state)
+void Display::syncTouchscreen(DisplayState& state)
 {
   bool touched = m_touchscreen.tirqTouched() && m_touchscreen.touched();
   if(touched)
@@ -89,10 +91,16 @@ void Display::syncTouchscreen(State& state)
 
 // GRAPHICS
 
-void startStopButtonUpdate(const State& state, Element* eRaw)
+void startStopButtonUpdate(const DisplayState& state, Element* eRaw)
 {
   TextElement* e = (TextElement*) eRaw;
-  if(state.game.status == GameStatus::IDLE)
+  if(state.mode != DisplayMode::GAME)
+  {
+    e->setHidden(true);
+    return;
+  }
+  e->setHidden(false);
+  if(state.game.state == GameState::IDLE)
   {
     e->setText("Запуск");
     e->setBackgroundColor(TFT_GREEN);
@@ -106,18 +114,15 @@ void startStopButtonUpdate(const State& state, Element* eRaw)
   }
 }
 
-void startStopButtonOnClick(State& state, Element* e)
+void startStopButtonOnClick(DisplayState& state, Element* e)
 {
-  Serial.println("Touch");
-  if(state.game.status == GameStatus::IDLE)
+  if(state.game.state == GameState::IDLE)
   {
-    Serial.println("Start command");
-    state.currentCommand = GameCommand::START;
+    state.button_state.start = true;
   }
   else
   {
-    Serial.println("Stop command");
-    state.currentCommand = GameCommand::STOP;
+    state.button_state.stop = true;
   }
 }
 
@@ -131,8 +136,52 @@ TextElement* setupStartStopButton(TextElement* e)
   return e;
 }
 
+void mainPanelUpdate(const DisplayState& state, Element* eRaw)
+{
+  TextElement* e = (TextElement*) eRaw;
+  if(state.mode != DisplayMode::GAME)
+  {
+    e->setHidden(true);
+    return;
+  }
+  e->setHidden(false);
+  switch (state.game.state)
+  {
+    case GameState::IDLE:
+    {
+      e->setText("--");
+      e->setTextColor(TFT_WHITE);
+      break;
+    }
+    case GameState::PRESS:
+    {
+      e->setText(String("К") + String(state.game.player + 1));
+      e->setTextColor(playerColors[state.game.player % 4]);
+      break;
+    }
+    case GameState::FALSTART:
+    {
+      e->setText("ФС");
+      e->setTextColor(playerColors[state.game.player % 4]);
+      break;
+    }
+  }
+
+}
+
+TextElement* setupMainPanel(TextElement* e)
+{
+  e->setFontSize(110);
+  e->setBorderColor(TFT_WHITE);
+  e->setBackgroundColor(COMMON_BACKGROUND_COLOR);
+  e->setUpdateCallback(mainPanelUpdate);
+  return e;
+}
+
+
 void Display::initElements()
 {
   m_tft.fillScreen(COMMON_BACKGROUND_COLOR);
   TextElement* startStopButton = setupStartStopButton(createTextElement({20, 200, 440, 100}));
+  TextElement* mainPanel = setupMainPanel(createTextElement({20, 40, 440, 150}));
 }

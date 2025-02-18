@@ -28,22 +28,22 @@ bool Element::checkHit(uint x, uint y)
   return x >= bounds.left && x <= bounds.right && y >= bounds.top && y <= bounds.bottom;
 }
 
-void Element::setUpdateCallback(void (*updateCallback)(const State&, Element*))
+void Element::setUpdateCallback(void (*updateCallback)(const DisplayState&, Element*))
 {
   m_updateCallback = updateCallback;
 }
 
-void Element::setOnPressCallback(void (*onPressCallback)(State&, Element*))
+void Element::setOnPressCallback(void (*onPressCallback)(DisplayState&, Element*))
 {
   m_onPress = onPressCallback;
 }
 
-void Element::setOnClickCallback(void (*onClickCallback)(State&, Element*))
+void Element::setOnClickCallback(void (*onClickCallback)(DisplayState&, Element*))
 {
   m_onClick = onClickCallback;
 }
 
-void Element::setOnHoldCallback(void (*onHoldCallback)(State&, Element*))
+void Element::setOnHoldCallback(void (*onHoldCallback)(DisplayState&, Element*))
 {
   m_onHold = onHoldCallback;
 }
@@ -75,7 +75,7 @@ void Element::setBorderRadius(int32_t radius)
   }
 }
 
-void Element::update(const State& state)
+void Element::update(const DisplayState& state)
 {
   if(!m_updateCallback)
   {
@@ -84,7 +84,16 @@ void Element::update(const State& state)
   m_updateCallback(state, this);
 }
 
-void Element::onPress(State& state, uint x, uint y)
+void Element::setHidden(bool hidden)
+{
+  if(m_hidden != hidden)
+  {
+    m_hidden = hidden;
+    m_dirty = true;
+  }
+}
+
+void Element::onPress(DisplayState& state, uint x, uint y)
 {
   if(!m_onPress|| m_hidden || !checkHit(x, y))
   {
@@ -93,7 +102,7 @@ void Element::onPress(State& state, uint x, uint y)
   m_onPress(state, this);
 }
 
-void Element::onClick(State& state, uint x, uint y)
+void Element::onClick(DisplayState& state, uint x, uint y)
 {
   if(!m_onClick|| m_hidden || !checkHit(x, y))
   {
@@ -102,7 +111,7 @@ void Element::onClick(State& state, uint x, uint y)
   m_onClick(state, this);
 }
 
-void Element::onHold(State& state, uint x, uint y)
+void Element::onHold(DisplayState& state, uint x, uint y)
 {
   if(!m_onHold|| m_hidden || !checkHit(x, y))
   {

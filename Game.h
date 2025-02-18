@@ -1,14 +1,29 @@
 #ifndef GAME_H
 #define GAME_H
 
-#include "State.h"
+#include "App.h"
 
-class Game
+class Game : public App
 {
 public:
-  Game(){};
+  Game();
 
-  void tick(State& state);
+  void tick(Hal* hal);
+
+  AppChangeType appChangeNeeded();
+  App* getCustomApp();
+
+  static App* initStatic();
+
+private:
+  void processIdle(Hal* hal, GameDisplayInfo& info);
+  void processCountdown(Hal* hal, GameDisplayInfo& info);
+  void processPress(Hal* hal, GameDisplayInfo& info);
+  void processFalstart(Hal* hal, GameDisplayInfo& info);
+
+private:
+  GameState m_state = GameState::IDLE;
+  bool m_displayDirty = true;
 };
 
 #endif

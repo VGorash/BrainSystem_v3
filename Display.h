@@ -13,8 +13,10 @@
 #include <OpenFontRender.h>
 #include <EncButton.h>
 
-#include "State.h"
 #include "graphics.h"
+#include "Hal.h"
+
+#define NUM_PLAYERS 4
 
 class Display
 {
@@ -24,8 +26,8 @@ public:
 
   void init();
 
-  void sync(const State &state);
-  void syncTouchscreen(State& state);
+  void sync(const DisplayState &state);
+  void syncTouchscreen(DisplayState& state);
 
 private:
   void initElements();

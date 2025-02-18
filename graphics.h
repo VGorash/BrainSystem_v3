@@ -4,7 +4,7 @@
 #include <TFT_eSPI.h>
 #include <OpenFontRender.h>
 
-#include "State.h"
+#include "DisplayState.h"
 
 #define COMMON_BACKGROUND_COLOR 0x0006
 #define COMMON_CONTENT_COLOR 0xFFFF
@@ -25,6 +25,8 @@ typedef struct coordinates
   uint h;
 } coordinates_t;
 
+struct DisplayState;
+
 class Element
 {
 public:
@@ -41,15 +43,15 @@ public:
   void setBorderColor(uint32_t color);
   void setBorderRadius(int32_t radius);
 
-  void setUpdateCallback(void (*updateCallback)(const State&, Element*));
-  void setOnPressCallback(void (*onPressCallback)(State&, Element*));
-  void setOnClickCallback(void (*onClickCallback)(State&, Element*));
-  void setOnHoldCallback(void (*onHoldCallback)(State&, Element*));
+  void setUpdateCallback(void (*updateCallback)(const DisplayState&, Element*));
+  void setOnPressCallback(void (*onPressCallback)(DisplayState&, Element*));
+  void setOnClickCallback(void (*onClickCallback)(DisplayState&, Element*));
+  void setOnHoldCallback(void (*onHoldCallback)(DisplayState&, Element*));
 
-  void update(const State& state);
-  void onPress(State& state, uint x, uint y);
-  void onClick(State& state, uint x, uint y);
-  void onHold(State& state, uint x, uint y);
+  void update(const DisplayState& state);
+  void onPress(DisplayState& state, uint x, uint y);
+  void onClick(DisplayState& state, uint x, uint y);
+  void onHold(DisplayState& state, uint x, uint y);
 
 protected:
   bool checkHit(uint x, uint y);
@@ -67,10 +69,10 @@ protected:
   TFT_eSPI* m_tft;
   OpenFontRender* m_fontRender;
 
-  void (*m_updateCallback)(const State&, Element*);
-  void (*m_onPress)(State&, Element*);
-  void (*m_onClick)(State&, Element*);
-  void (*m_onHold)(State&, Element*);
+  void (*m_updateCallback)(const DisplayState&, Element*);
+  void (*m_onPress)(DisplayState&, Element*);
+  void (*m_onClick)(DisplayState&, Element*);
+  void (*m_onHold)(DisplayState&, Element*);
 };
 
 class TextElement : public Element
