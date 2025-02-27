@@ -1,15 +1,20 @@
 #include "Game.h"
 
-Game::Game()
+Game::Game(bool falstartEnabled) : m_falstartEnabled(falstartEnabled)
 {
 
 }
 
 void Game::tick(Hal* hal)
 {
+  m_delayTimer.tick(hal);
+
+  if(m_delayTimer.isStarted())
+  {
+    return;
+  }
+
   GameDisplayInfo info;
-  info.name = "";
-  info.mode = "";
 
   switch(m_state)
   {
@@ -27,10 +32,12 @@ void Game::tick(Hal* hal)
       break;
   }
 
-  info.state = m_state;
-
   if(m_displayDirty)
   {
+    info.name = getName();
+    info.falstart_enabled = m_falstartEnabled;
+    info.state = m_state;
+
     hal->updateDisplay(info);
     m_displayDirty = false;
   }
@@ -38,57 +45,50 @@ void Game::tick(Hal* hal)
 
 void Game::processIdle(Hal* hal, GameDisplayInfo& info)
 {
-  const ButtonState& buttonState = hal->getButtonState();
+  ButtonState buttonState = hal->getButtonState();
 
-  if(buttonState.start)
-  {
-    m_state = GameState::COUNTDOWN;
-    m_displayDirty = true;
-    hal->signalLedOn();
-    return;
-  }
   if(buttonState.player >= 0)
   {
-    m_state = GameState::FALSTART;
-    m_displayDirty = true;
-    hal->ledsOff();
-    hal->playerLedBlink(buttonState.player);
-    info.player = buttonState.player;
+    if(m_falstartEnabled)
+    {
+      falstart(hal, info, buttonState.player);
+    }
+    else
+    {
+      press(hal, info, buttonState.player);
+    }
+    return;
+  }
+  if(buttonState.start)
+  {
+    start(hal, info);
     return;
   }
 }
 
 void Game::processCountdown(Hal* hal, GameDisplayInfo& info)
 {
-  const ButtonState& buttonState = hal->getButtonState();
-
-  if(buttonState.stop)
-  {
-    m_state = GameState::IDLE;
-    m_displayDirty = true;
-    hal->ledsOff();
-    return;
-  }
+  ButtonState buttonState = hal->getButtonState();
+  
   if(buttonState.player >= 0)
   {
-    m_state = GameState::PRESS;
-    m_displayDirty = true;
-    hal->ledsOff();
-    hal->playerLedOn(buttonState.player);
-    info.player = buttonState.player;
+    press(hal, info, buttonState.player);
+    return;
+  }
+  if(buttonState.stop)
+  {
+    reset(hal, info);
     return;
   }
 }
 
 void Game::processPress(Hal* hal, GameDisplayInfo& info)
 {
-  const ButtonState& buttonState = hal->getButtonState();
+  ButtonState buttonState = hal->getButtonState();
 
   if(buttonState.stop)
   {
-    m_state = GameState::IDLE;
-    m_displayDirty = true;
-    hal->ledsOff();
+    reset(hal, info);
     return;
   }
 }
@@ -98,6 +98,48 @@ void Game::processFalstart(Hal* hal, GameDisplayInfo& info)
   processPress(hal, info);
 }
 
+void Game::start(Hal* hal, GameDisplayInfo& info)
+{
+  m_state = GameState::COUNTDOWN;
+  m_displayDirty = true;
+  hal->signalLedOn();
+  hal->sound(HalSound::Start);
+}
+
+void Game::reset(Hal* hal, GameDisplayInfo& info)
+{
+  m_state = GameState::IDLE;
+  m_displayDirty = true;
+  hal->ledsOff();
+}
+
+void Game::press(Hal* hal, GameDisplayInfo& info, int player)
+{
+  m_state = GameState::PRESS;
+  m_displayDirty = true;
+  hal->ledsOff();
+  hal->playerLedOn(player);
+  hal->sound(HalSound::Press);
+  info.player = player;
+  m_delayTimer.start(hal);
+}
+
+void Game::falstart(Hal* hal, GameDisplayInfo& info, int player)
+{
+  m_state = GameState::FALSTART;
+  m_displayDirty = true;
+  hal->ledsOff();
+  hal->playerLedBlink(player);
+  hal->sound(HalSound::Falstart);
+  info.player = player;
+  m_delayTimer.start(hal);
+}
+
+const char* Game::getName()
+{
+  return "БЕЗ ОТСЧЕТА";
+}
+
 AppChangeType Game::appChangeNeeded()
 {
   return AppChangeType::NONE;
@@ -105,10 +147,10 @@ AppChangeType Game::appChangeNeeded()
 
 App* Game::getCustomApp()
 {
-  return new Game();
+  return new Game(true);
 }
 
 App* Game::initStatic()
 {
-  return new Game();
+  return new Game(false);
 }

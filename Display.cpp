@@ -129,7 +129,7 @@ void startStopButtonOnClick(DisplayState& state, Element* e)
 TextElement* setupStartStopButton(TextElement* e)
 {
   e->setTextColor(TFT_BLACK);
-  e->setBorderRadius(5);
+  e->setBorderRadius(0);
   e->setFontSize(30);
   e->setUpdateCallback(startStopButtonUpdate);
   e->setOnPressCallback(startStopButtonOnClick);
@@ -153,6 +153,19 @@ void mainPanelUpdate(const DisplayState& state, Element* eRaw)
       e->setTextColor(TFT_WHITE);
       break;
     }
+    case GameState::COUNTDOWN:
+    {
+      if(state.game.gameTime >= 0)
+      {
+        e->setText(String(state.game.gameTime));
+      }
+      else
+      {
+        e->setText("--");
+      }
+      e->setTextColor(TFT_WHITE);
+      break;
+    }
     case GameState::PRESS:
     {
       e->setText(String("К") + String(state.game.player + 1));
@@ -166,15 +179,35 @@ void mainPanelUpdate(const DisplayState& state, Element* eRaw)
       break;
     }
   }
-
 }
 
 TextElement* setupMainPanel(TextElement* e)
 {
   e->setFontSize(110);
-  e->setBorderColor(TFT_WHITE);
   e->setBackgroundColor(COMMON_BACKGROUND_COLOR);
   e->setUpdateCallback(mainPanelUpdate);
+  return e;
+}
+
+void titlePanelUpdate(const DisplayState& state, Element* eRaw)
+{
+  TextElement* e = (TextElement*) eRaw;
+  if(state.mode != DisplayMode::GAME)
+  {
+    e->setHidden(true);
+    return;
+  }
+  e->setHidden(false);
+
+  e->setText(state.game.name);
+}
+
+TextElement* setupTitlePanel(TextElement* e)
+{
+  e->setTextColor(TFT_WHITE);
+  e->setBackgroundColor(COMMON_BACKGROUND_COLOR);
+  e->setFontSize(30);
+  e->setUpdateCallback(titlePanelUpdate);
   return e;
 }
 
@@ -182,6 +215,7 @@ TextElement* setupMainPanel(TextElement* e)
 void Display::initElements()
 {
   m_tft.fillScreen(COMMON_BACKGROUND_COLOR);
-  TextElement* startStopButton = setupStartStopButton(createTextElement({20, 200, 440, 100}));
-  TextElement* mainPanel = setupMainPanel(createTextElement({20, 40, 440, 150}));
+  TextElement* startStopButton = setupStartStopButton(createTextElement({0, 200, 480, 120}));
+  TextElement* mainPanel = setupMainPanel(createTextElement({0, 70, 480, 110}));
+  TextElement* titlePanel = setupTitlePanel(createTextElement({120, 5, 240, 30}));
 }

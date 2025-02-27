@@ -3,6 +3,16 @@
 
 #include "DisplayInfo.h"
 
+enum HalSound
+{
+  Start,
+  Press,
+  Falstart,
+  Tick,
+  End,
+  None
+};
+
 typedef struct ButtonState
 {
   bool start = false;
@@ -24,7 +34,7 @@ public:
   virtual void tick() = 0;
 
   //buttons
-  virtual const ButtonState& getButtonState() = 0;
+  virtual ButtonState getButtonState() = 0;
 
   //leds
   virtual void playerLedOn(int player) = 0;
@@ -33,7 +43,8 @@ public:
   virtual void ledsOff();
 
   //sound
-  virtual void sound(int frequency, int duration) = 0;
+  virtual void sound(HalSound soundType) = 0;
+  virtual void sound(unsigned int frequency, unsigned int duration) = 0;
 
   //display
   virtual void updateDisplay(const GameDisplayInfo& info) = 0;

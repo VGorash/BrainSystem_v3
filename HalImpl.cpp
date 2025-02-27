@@ -13,6 +13,18 @@
 
 #define BUZZER 18
 
+#define SOUND_TONE_START 2000
+#define SOUND_TONE_PRESS 1000
+#define SOUND_TONE_FALSTART 500
+#define SOUND_TONE_TICK 1500
+#define SOUND_TONE_END 250
+
+#define SOUND_DURATION_START 1000
+#define SOUND_DURATION_PRESS 1000
+#define SOUND_DURATION_FALSTART 500
+#define SOUND_DURATION_TICK 250
+#define SOUND_DURATION_END 1000
+
 static const int playerButtonPins[NUM_PLAYERS] = {BUTTON_PLAYER_1, BUTTON_PLAYER_2, BUTTON_PLAYER_3, BUTTON_PLAYER_4};
 static const int playerLedPins[NUM_PLAYERS] = {LED_PLAYER_1, LED_PLAYER_2, LED_PLAYER_3, LED_PLAYER_4};
 
@@ -20,6 +32,8 @@ HalImpl::HalImpl()
 {
   m_blinkTimer.setTime(500);
   m_blinkTimer.setPeriodMode(true);
+
+  m_soundTimer.setPeriodMode(false);
 }
 
 HalImpl::~HalImpl()
@@ -60,6 +74,11 @@ void HalImpl::tick()
     }
   }
 
+  if(m_soundTimer.tick(this))
+  {
+    ledcDetach(BUZZER);
+  }
+
   for(int i=0; i<NUM_PLAYERS; i++)
   {
     m_playerButtons[i].tick();
@@ -67,14 +86,15 @@ void HalImpl::tick()
     if(m_playerButtons[i].press())
     {
       m_displayState.button_state.player = i;
-      return;
     }
   }
 }
 
-const ButtonState& HalImpl::getButtonState()
+
+ButtonState HalImpl::getButtonState()
 {
-  return m_displayState.button_state;
+  ButtonState s = m_displayState.button_state;
+  return s;
 }
 
 void HalImpl::playerLedOn(int player)
@@ -129,9 +149,38 @@ void HalImpl::ledsOff()
   m_blinkTimer.stop();
 }
 
-void HalImpl::sound(int frequency, int duration)
+void HalImpl::sound(HalSound soundType)
 {
+  switch(soundType)
+  {
+    case HalSound::Start:
+      sound(SOUND_TONE_START, SOUND_DURATION_START);
+      break;
+    case HalSound::Press:
+      sound(SOUND_TONE_PRESS, SOUND_DURATION_PRESS);
+      break;
+    case HalSound::Falstart:
+      sound(SOUND_TONE_FALSTART, SOUND_DURATION_FALSTART);
+      break;
+    case HalSound::Tick:
+      sound(SOUND_TONE_TICK, SOUND_DURATION_TICK);
+      break;
+    case HalSound::End:
+      sound(SOUND_TONE_END, SOUND_DURATION_END);
+      break;
+    case HalSound::None:
+      ledcDetach(BUZZER);
+      break;
+  }
+}
 
+void HalImpl::sound(unsigned int frequency, unsigned int duration)
+{
+  return;
+  m_soundTimer.setTime(duration);
+  m_soundTimer.start(this);
+  ledcAttach(BUZZER, 50, 10);
+  ledcWriteTone(BUZZER, frequency);
 }
 
 void HalImpl::updateDisplay(const GameDisplayInfo& info)

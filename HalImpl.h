@@ -17,7 +17,7 @@ public:
   void tick() override;
 
     //buttons
-  const ButtonState& getButtonState() override;
+  ButtonState getButtonState() override;
 
   //leds
   void playerLedOn(int player) override;
@@ -26,7 +26,8 @@ public:
   void ledsOff() override;
 
   //sound
-  void sound(int frequency, int duration) override;
+  void sound(HalSound soundType) override;
+  void sound(unsigned int frequency, unsigned int duration) override;
 
   //display
   void updateDisplay(const GameDisplayInfo& info) override;
@@ -43,6 +44,7 @@ private:
   Button m_playerButtons[NUM_PLAYERS];
 
   Timer m_blinkTimer;
+  Timer m_soundTimer;
   bool m_blinkState = 0;
   bool m_blinkingLeds[NUM_PLAYERS];
 };
