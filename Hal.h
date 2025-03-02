@@ -48,7 +48,6 @@ public:
 
   //display
   virtual void updateDisplay(const GameDisplayInfo& info) = 0;
-  virtual void updateDisplay(const SettingsDisplayInfo& info) = 0;
   virtual void updateDisplay(const CustomDisplayInfo& info) = 0;
 
   //time

@@ -24,6 +24,7 @@ public:
   void tick()
   {
     m_hal->tick();
+    
     m_app->tick(m_hal);
 
     switch(m_app->appChangeNeeded())

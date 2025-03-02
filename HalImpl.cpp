@@ -57,9 +57,7 @@ void HalImpl::init()
 
 void HalImpl::tick()
 {
-  m_displayState.button_state = ButtonState();
-
-  m_display.syncTouchscreen(m_displayState);
+  m_display.tick();
 
   if(m_blinkTimer.tick(this))
   {
@@ -74,26 +72,31 @@ void HalImpl::tick()
     }
   }
 
-  if(m_soundTimer.tick(this))
-  {
-    ledcDetach(BUZZER);
-  }
-
   for(int i=0; i<NUM_PLAYERS; i++)
   {
     m_playerButtons[i].tick();
+  }
 
-    if(m_playerButtons[i].press())
-    {
-      m_displayState.button_state.player = i;
-    }
+  if(m_soundTimer.tick(this))
+  {
+    ledcDetach(BUZZER);
   }
 }
 
 
 ButtonState HalImpl::getButtonState()
 {
-  ButtonState s = m_displayState.button_state;
+  ButtonState s = m_display.syncTouchscreen();
+
+  for(int i=0; i<NUM_PLAYERS; i++)
+  {
+    if(m_playerButtons[i].press())
+    {
+      s.player = i;
+      break;
+    }
+  }
+
   return s;
 }
 
@@ -185,15 +188,12 @@ void HalImpl::sound(unsigned int frequency, unsigned int duration)
 
 void HalImpl::updateDisplay(const GameDisplayInfo& info)
 {
-  m_displayState.mode = DisplayMode::GAME;
-  m_displayState.game = info;
-  m_display.sync(m_displayState);
+  DisplayState s;
+  s.mode = DisplayMode::GAME;
+  s.game = info;
+  m_display.sync(s);
 }
 
-void HalImpl::updateDisplay(const SettingsDisplayInfo& info)
-{
-
-}
 
 void HalImpl::updateDisplay(const CustomDisplayInfo& info)
 {

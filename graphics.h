@@ -35,7 +35,7 @@ public:
   coordinates_t getCoordinates();
   bounds_t getBounds();
 
-  virtual void show(bool force) = 0;
+  virtual void show(bool force, bool clearDirty = true);
 
   void setHidden(bool hidden);
 
@@ -55,6 +55,7 @@ public:
 
 protected:
   bool checkHit(uint x, uint y);
+  bool shouldUpdate(bool force);
 
 protected:
   coordinates_t m_coordinates;
@@ -84,12 +85,27 @@ public:
   void setTextColor(uint32_t color);
   void setFontSize(uint size);
 
-  void show(bool force) override;
+  void show(bool force, bool clearDirty = true) override;
 
 protected:
   uint32_t m_textColor = COMMON_CONTENT_COLOR;
   uint m_fontSize = 14;
   String m_text;
+};
+
+class BitmapElement : public Element
+{
+public:
+  BitmapElement(TFT_eSPI* tft, OpenFontRender* fontRender, const coordinates_t& coordinates);
+
+  void setBitmap(const uint8_t* bitmap);
+  void setBitmapColor(uint32_t color);
+
+  void show(bool force, bool clearDirty = true) override;
+
+protected:
+  uint32_t m_bitmapColor = COMMON_CONTENT_COLOR;
+  const uint8_t* m_bitmap = nullptr;
 };
 
 #endif

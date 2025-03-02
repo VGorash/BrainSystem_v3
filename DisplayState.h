@@ -13,7 +13,7 @@ typedef struct DisplayState
   // ---- INPUT ----
   DisplayMode mode;
   GameDisplayInfo game;
-  SettingsDisplayInfo settings;
+  CustomDisplayInfo custom;
 
   // ---- OUTPUT ----
   ButtonState button_state;

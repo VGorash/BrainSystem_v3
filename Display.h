@@ -26,15 +26,20 @@ public:
 
   void init();
 
-  void sync(const DisplayState &state);
-  void syncTouchscreen(DisplayState& state);
+  void tick();
+
+  void sync(const DisplayState& state);
+  ButtonState syncTouchscreen();
 
 private:
   void initElements();
 
   TextElement* createTextElement(coordinates_t coordinates);
+  BitmapElement* createBitmapElement(coordinates_t coordinates);
 
 private:
+  DisplayState m_state;
+
   TFT_eSPI m_tft;
   OpenFontRender m_fontRender;
 

@@ -28,6 +28,27 @@ bool Element::checkHit(uint x, uint y)
   return x >= bounds.left && x <= bounds.right && y >= bounds.top && y <= bounds.bottom;
 }
 
+bool Element::shouldUpdate(bool force)
+{
+  return !m_hidden && (force || m_dirty);
+}
+
+void Element::show(bool force, bool clearDirty)
+{
+  if(!shouldUpdate(force))
+  {
+    return;
+  }
+
+  m_tft->fillRoundRect(m_coordinates.x, m_coordinates.y, m_coordinates.w, m_coordinates.h, m_borderRadius, m_backgroundColor);
+  m_tft->drawRoundRect(m_coordinates.x, m_coordinates.y, m_coordinates.w, m_coordinates.h, m_borderRadius, m_borderColor);
+
+  if(clearDirty)
+  {
+    m_dirty = false;
+  }
+}
+
 void Element::setUpdateCallback(void (*updateCallback)(const DisplayState&, Element*))
 {
   m_updateCallback = updateCallback;
@@ -150,23 +171,61 @@ void TextElement::setFontSize(uint size)
   }
 }
 
-void TextElement::show(bool force)
+void TextElement::show(bool force, bool clearDirty)
 {
-  bool shouldUpdate = !m_hidden && (force || m_dirty);
-  if(!shouldUpdate)
+  Element::show(force, false);
+
+  if(!shouldUpdate(force))
   {
     return;
   }
 
-  m_tft->fillRoundRect(m_coordinates.x, m_coordinates.y, m_coordinates.w, m_coordinates.h, m_borderRadius, m_backgroundColor);
-  m_tft->drawRoundRect(m_coordinates.x, m_coordinates.y, m_coordinates.w, m_coordinates.h, m_borderRadius, m_borderColor);
-
-  m_fontRender->setFontColor(m_textColor);
+  m_fontRender->setFontColor(m_textColor, m_backgroundColor);
   m_fontRender->setFontSize(m_fontSize);
   uint x = m_coordinates.x + (m_coordinates.w - m_fontRender->getTextWidth(m_text.c_str())) / 2;
   uint y = m_coordinates.y + (m_coordinates.h - m_fontRender->getTextHeight(m_text.c_str())) / 2;
   m_fontRender->setCursor(x, y);
   m_fontRender->printf(m_text.c_str());
-  
-  m_dirty = false;
+
+  if(clearDirty)
+  {
+    m_dirty = false;
+  }
+}
+
+BitmapElement::BitmapElement(TFT_eSPI* tft, OpenFontRender* fontRender, const coordinates_t& coordinates): Element(tft, fontRender, coordinates){}
+
+void BitmapElement::setBitmap(const uint8_t* bitmap)
+{
+  if(m_bitmap != bitmap)
+  {
+    m_bitmap = bitmap;
+    m_dirty = true;
+  }
+}
+
+void BitmapElement::setBitmapColor(uint32_t color)
+{
+  if(m_bitmapColor != color)
+  {
+    m_bitmapColor = color;
+    m_dirty = true;
+  }
+}
+
+void BitmapElement::show(bool force, bool clearDirty)
+{
+  Element::show(force, false);
+
+  if(!shouldUpdate(force) || !m_bitmap)
+  {
+    return;
+  }
+
+  m_tft->drawBitmap(m_coordinates.x, m_coordinates.y, m_bitmap, m_coordinates.w, m_coordinates.h, m_bitmapColor, m_backgroundColor);
+
+  if(clearDirty)
+  {
+    m_dirty = false;
+  }
 }

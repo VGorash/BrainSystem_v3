@@ -12,8 +12,6 @@ public:
   ~HalImpl();
 
   void init();
-
-  //main functions
   void tick() override;
 
     //buttons
@@ -31,14 +29,12 @@ public:
 
   //display
   void updateDisplay(const GameDisplayInfo& info) override;
-  void updateDisplay(const SettingsDisplayInfo& info) override;
   void updateDisplay(const CustomDisplayInfo& info) override;
 
   //time
   unsigned long getTimeMillis() override;
 
 private:
-  DisplayState m_displayState;
   Display m_display;
 
   Button m_playerButtons[NUM_PLAYERS];

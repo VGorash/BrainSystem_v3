@@ -1,6 +1,7 @@
 #include "Display.h"
 #include "binaryttf.h"
 #include "graphics.h"
+#include "icons.h"
 
 #define SCREEN_WIDTH 480
 #define SCREEN_HEIGHT 320
@@ -44,49 +45,69 @@ TextElement* Display::createTextElement(coordinates_t coordinates)
   return e;
 }
 
+BitmapElement* Display::createBitmapElement(coordinates_t coordinates)
+{
+  BitmapElement* e = new BitmapElement(&m_tft, &m_fontRender, coordinates);
+  m_elements[m_numElements++] = e;
+  return e;
+}
+
+void Display::tick()
+{
+  bool touched = m_touchscreen.tirqTouched() && m_touchscreen.touched();
+  if(touched)
+  {
+    TS_Point p = m_touchscreen.getPoint();
+    m_touchX = SCREEN_WIDTH - map(p.x, 600, 4000, 1, SCREEN_WIDTH);
+    m_touchY = SCREEN_HEIGHT - map(p.y, 240, 3800, 1, SCREEN_HEIGHT);
+  }
+  m_buttonEmulator.tick(touched);
+}
+
 void Display::sync(const DisplayState& state)
 {
+  m_state = state;
+
   for(int i=0; i<m_numElements; i++)
   {
-    m_elements[i]->update(state);
+    m_elements[i]->update(m_state);
   }
+
   for(int i=0; i<m_numElements; i++)
   {
     m_elements[i]->show(false);
   }
 }
 
-void Display::syncTouchscreen(DisplayState& state)
+ButtonState Display::syncTouchscreen()
 {
-  bool touched = m_touchscreen.tirqTouched() && m_touchscreen.touched();
-  if(touched)
-  {
-    TS_Point p = m_touchscreen.getPoint();
-    m_touchX = SCREEN_WIDTH - map(p.x, 200, 3700, 1, SCREEN_WIDTH);
-    m_touchY = SCREEN_HEIGHT - map(p.y, 240, 3800, 1, SCREEN_HEIGHT);
-  }
-  m_buttonEmulator.tick(touched);
+  m_state.button_state = ButtonState();
+
   if(m_buttonEmulator.press())
   {
     for(int i=0; i<m_numElements; i++)
     {
-      m_elements[i]->onPress(state, m_touchX, m_touchY);
+      m_elements[i]->onPress(m_state, m_touchX, m_touchY);
     }
+    m_tft.drawLine(m_touchX, 0, m_touchX, SCREEN_HEIGHT, TFT_RED);
+    m_tft.drawLine(0, m_touchY, SCREEN_WIDTH, m_touchY, TFT_RED);
   }
   if(m_buttonEmulator.hold())
   {
     for(int i=0; i<m_numElements; i++)
     {
-      m_elements[i]->onHold(state, m_touchX, m_touchY);
+      m_elements[i]->onHold(m_state, m_touchX, m_touchY);
     }
   }
   if(m_buttonEmulator.click())
   {
     for(int i=0; i<m_numElements; i++)
     {
-      m_elements[i]->onClick(state, m_touchX, m_touchY);
+      m_elements[i]->onClick(m_state, m_touchX, m_touchY);
     }
   }
+
+  return m_state.button_state;
 }
 
 // GRAPHICS
@@ -211,11 +232,35 @@ TextElement* setupTitlePanel(TextElement* e)
   return e;
 }
 
+void settingsIconUpdate(const DisplayState& state, Element* eRaw)
+{
+  BitmapElement* e = (BitmapElement*) eRaw;
+
+  if(state.mode != DisplayMode::GAME)
+  {
+    e->setHidden(true);
+    return;
+  }
+  e->setHidden(false);
+}
+
+BitmapElement* setupSettingsIcon(BitmapElement* e)
+{
+  e->setBitmapColor(TFT_WHITE);
+  e->setBackgroundColor(COMMON_BACKGROUND_COLOR);
+  e->setBitmap(bitmap_settings_30_30);
+  e->setUpdateCallback(settingsIconUpdate);
+  e->setOnPressCallback(startStopButtonOnClick);
+  return e;
+}
+
 
 void Display::initElements()
 {
   m_tft.fillScreen(COMMON_BACKGROUND_COLOR);
+  // GAME WINDOW
   TextElement* startStopButton = setupStartStopButton(createTextElement({0, 200, 480, 120}));
   TextElement* mainPanel = setupMainPanel(createTextElement({0, 70, 480, 110}));
   TextElement* titlePanel = setupTitlePanel(createTextElement({120, 5, 240, 30}));
+  BitmapElement* setingsIcon = setupSettingsIcon(createBitmapElement({5, 5, 30, 30}));
 }

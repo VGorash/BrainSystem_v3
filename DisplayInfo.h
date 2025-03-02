@@ -19,16 +19,8 @@ typedef struct GameDisplayInfo
   const char* custom = "";
 } GameDisplayInfo;
 
-typedef struct SettingsDisplayInfo
-{
-  const char* setting_name = "";
-  const char* setting_value = "";
-  const char* custom = "";
-} SettingsDisplayInfo;
-
 typedef struct CustomDisplayInfo
 {
   const char* name = "";
-  unsigned long custom_size = 0;
-  const void* custom_data = nullptr;
+  const void* data = nullptr;
 } CustomDisplayInfo;
