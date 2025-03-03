@@ -36,5 +36,5 @@ const char* BrainRingGame::getName()
 
 App* BrainRingGame::initStatic()
 {
-  return new BrainRingGame(true);
+  return new BrainRingGame(false);
 }

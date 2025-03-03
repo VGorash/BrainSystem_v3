@@ -311,6 +311,28 @@ BitmapElement* setupSettingsIcon(BitmapElement* e)
   return e;
 }
 
+void modePanelUpdate(const DisplayState& state, Element* eRaw)
+{
+  TextElement* e = (TextElement*) eRaw;
+  if(state.mode != DisplayMode::GAME)
+  {
+    e->setHidden(true);
+    return;
+  }
+  e->setHidden(false);
+
+  e->setText(state.game.falstart_enabled ? "Ф/С" : "Б/Ф");
+}
+
+TextElement* setupModePanel(TextElement* e)
+{
+  e->setTextColor(TFT_WHITE);
+  e->setBackgroundColor(COMMON_BACKGROUND_COLOR);
+  e->setFontSize(30);
+  e->setUpdateCallback(modePanelUpdate);
+  return e;
+}
+
 
 void Display::initElements()
 {
@@ -321,5 +343,6 @@ void Display::initElements()
   TextElement* brainStartButton = setupBrainStartButton(createTextElement({240, 200, 240, 120}));
   TextElement* mainPanel = setupMainPanel(createTextElement({0, 70, 480, 110}));
   TextElement* titlePanel = setupTitlePanel(createTextElement({120, 5, 240, 30}));
+  TextElement* modePanel = setupModePanel(createTextElement({400, 5, 80, 30}));
   BitmapElement* setingsIcon = setupSettingsIcon(createBitmapElement({5, 5, 30, 30}));
 }
