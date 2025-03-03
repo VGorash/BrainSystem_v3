@@ -24,7 +24,6 @@ protected:
 protected:
   Timer m_gameTimer;
   int m_secondsLeft = 0;
-
 };
 
 #endif

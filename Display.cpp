@@ -89,8 +89,8 @@ ButtonState Display::syncTouchscreen()
     {
       m_elements[i]->onPress(m_state, m_touchX, m_touchY);
     }
-    m_tft.drawLine(m_touchX, 0, m_touchX, SCREEN_HEIGHT, TFT_RED);
-    m_tft.drawLine(0, m_touchY, SCREEN_WIDTH, m_touchY, TFT_RED);
+    //m_tft.drawLine(m_touchX, 0, m_touchX, SCREEN_HEIGHT, TFT_RED);
+    //m_tft.drawLine(0, m_touchY, SCREEN_WIDTH, m_touchY, TFT_RED);
   }
   if(m_buttonEmulator.hold())
   {
@@ -116,6 +116,11 @@ void startStopButtonUpdate(const DisplayState& state, Element* eRaw)
 {
   TextElement* e = (TextElement*) eRaw;
   if(state.mode != DisplayMode::GAME)
+  {
+    e->setHidden(true);
+    return;
+  }
+  if(state.game.name == "БРЕЙН-РИНГ" && state.game.state == GameState::PRESS)
   {
     e->setHidden(true);
     return;
@@ -154,6 +159,58 @@ TextElement* setupStartStopButton(TextElement* e)
   e->setFontSize(30);
   e->setUpdateCallback(startStopButtonUpdate);
   e->setOnPressCallback(startStopButtonOnClick);
+  return e;
+}
+
+void brainStartStopButtonUpdate(const DisplayState& state, Element* eRaw)
+{
+  TextElement* e = (TextElement*) eRaw;
+  if(state.mode != DisplayMode::GAME)
+  {
+    e->setHidden(true);
+    return;
+  }
+  if(state.game.name != "БРЕЙН-РИНГ" || state.game.state != GameState::PRESS)
+  {
+    e->setHidden(true);
+    return;
+  }
+  e->setHidden(false);
+}
+
+void brainStartButtonOnClick(DisplayState& state, Element* e)
+{
+  state.button_state.start = true;
+}
+
+TextElement* setupBrainStartButton(TextElement* e)
+{
+  e->setTextColor(TFT_BLACK);
+  e->setBorderRadius(0);
+  e->setFontSize(30);
+  e->setText("20 секунд");
+  e->setBackgroundColor(TFT_GREEN);
+  e->setBorderColor(TFT_GREEN);
+  e->setUpdateCallback(brainStartStopButtonUpdate);
+  e->setOnPressCallback(brainStartButtonOnClick);
+  return e;
+}
+
+void brainStopButtonOnClick(DisplayState& state, Element* e)
+{
+  state.button_state.stop = true;
+}
+
+TextElement* setupBrainStopButton(TextElement* e)
+{
+  e->setTextColor(TFT_BLACK);
+  e->setBorderRadius(0);
+  e->setFontSize(30);
+  e->setText("Сброс");
+  e->setBackgroundColor(TFT_RED);
+  e->setBorderColor(TFT_RED);
+  e->setUpdateCallback(brainStartStopButtonUpdate);
+  e->setOnPressCallback(brainStopButtonOnClick);
   return e;
 }
 
@@ -260,6 +317,8 @@ void Display::initElements()
   m_tft.fillScreen(COMMON_BACKGROUND_COLOR);
   // GAME WINDOW
   TextElement* startStopButton = setupStartStopButton(createTextElement({0, 200, 480, 120}));
+  TextElement* brainStopButton = setupBrainStopButton(createTextElement({0, 200, 240, 120}));
+  TextElement* brainStartButton = setupBrainStartButton(createTextElement({240, 200, 240, 120}));
   TextElement* mainPanel = setupMainPanel(createTextElement({0, 70, 480, 110}));
   TextElement* titlePanel = setupTitlePanel(createTextElement({120, 5, 240, 30}));
   BitmapElement* setingsIcon = setupSettingsIcon(createBitmapElement({5, 5, 30, 30}));

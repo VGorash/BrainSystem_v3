@@ -49,12 +49,12 @@ void JeopardyGame::press(Hal* hal, GameDisplayInfo& info, int player)
   Game::press(hal, info, player);
 }
 
-App* JeopardyGame::initStatic()
-{
-  return new JeopardyGame(true);
-}
-
 const char* JeopardyGame::getName()
 {
   return "СВОЯ ИГРА";
+}
+
+App* JeopardyGame::initStatic()
+{
+  return new JeopardyGame(true);
 }

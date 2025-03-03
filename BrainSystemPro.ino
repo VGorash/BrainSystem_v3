@@ -1,6 +1,6 @@
 #include "Engine.h"
 #include "HalImpl.h"
-#include "JeopardyGame.h"
+#include "BrainRingGame.h"
 
 #include <EncButton.h>
  
@@ -16,7 +16,7 @@ void setup() {
   hal = new HalImpl();
   hal->init();
 
-  engine = new Engine(hal, JeopardyGame::initStatic, nullptr);
+  engine = new Engine(hal, BrainRingGame::initStatic, nullptr);
 
 }
 
