@@ -62,21 +62,35 @@ void Display::tick()
     m_touchY = SCREEN_HEIGHT - map(p.y, 240, 3800, 1, SCREEN_HEIGHT);
   }
   m_buttonEmulator.tick(touched);
+
+  if(m_state.dirty)
+  {
+    for(int i=0; i<m_numElements; i++)
+    {
+      m_elements[i]->update(m_state);
+    }
+
+    if(m_state.modeChanged)
+    {
+      m_tft.fillScreen(COMMON_BACKGROUND_COLOR);
+    }
+
+    for(int i=0; i<m_numElements; i++)
+    {
+      m_elements[i]->show(m_state.modeChanged);
+    }
+
+    m_state.modeChanged = false;
+    m_state.dirty = false;
+  }
 }
 
 void Display::sync(const DisplayState& state)
 {
+  bool modeChanged = m_state.mode != state.mode;
   m_state = state;
-
-  for(int i=0; i<m_numElements; i++)
-  {
-    m_elements[i]->update(m_state);
-  }
-
-  for(int i=0; i<m_numElements; i++)
-  {
-    m_elements[i]->show(false);
-  }
+  m_state.dirty = true;
+  m_state.modeChanged = modeChanged;
 }
 
 ButtonState Display::syncTouchscreen()
@@ -217,12 +231,15 @@ TextElement* setupBrainStopButton(TextElement* e)
 void mainPanelUpdate(const DisplayState& state, Element* eRaw)
 {
   TextElement* e = (TextElement*) eRaw;
+
   if(state.mode != DisplayMode::GAME)
   {
     e->setHidden(true);
     return;
   }
+
   e->setHidden(false);
+
   switch (state.game.state)
   {
     case GameState::IDLE:
@@ -270,14 +287,25 @@ TextElement* setupMainPanel(TextElement* e)
 void titlePanelUpdate(const DisplayState& state, Element* eRaw)
 {
   TextElement* e = (TextElement*) eRaw;
-  if(state.mode != DisplayMode::GAME)
-  {
-    e->setHidden(true);
-    return;
-  }
   e->setHidden(false);
 
-  e->setText(state.game.name);
+  if(state.mode == DisplayMode::GAME)
+  {
+    e->setText(state.game.name);
+  }
+  if(state.mode == DisplayMode::SETTINGS)
+  {
+    if(state.settings.edit_mode)
+    {
+      String settingName = String(state.settings.settings->getCurrentItem()->getName());
+      settingName.toUpperCase();
+      e->setText(settingName);
+    }
+    else
+    {
+      e->setText("НАСТРОЙКИ");
+    }
+  }
 }
 
 TextElement* setupTitlePanel(TextElement* e)
@@ -289,25 +317,41 @@ TextElement* setupTitlePanel(TextElement* e)
   return e;
 }
 
+void settingsIconOnClick(DisplayState& state, Element* e)
+{
+  state.button_state.menu = true;
+}
+
 void settingsIconUpdate(const DisplayState& state, Element* eRaw)
 {
   BitmapElement* e = (BitmapElement*) eRaw;
 
-  if(state.mode != DisplayMode::GAME)
-  {
-    e->setHidden(true);
-    return;
-  }
   e->setHidden(false);
+
+  if(state.mode == DisplayMode::GAME && state.game.state == GameState::IDLE)
+  {
+    e->setBitmap(bitmap_settings_30_30);
+  }
+  else if(state.mode == DisplayMode::SETTINGS && state.settings.edit_mode)
+  {
+    e->setBitmap(bitmap_back_30_30);
+  }
+  else if(state.mode == DisplayMode::SETTINGS)
+  {
+    e->setBitmap(bitmap_close_30_30);
+  }
+  else
+  {
+    e->setBitmap(nullptr);
+  }
 }
 
 BitmapElement* setupSettingsIcon(BitmapElement* e)
 {
   e->setBitmapColor(TFT_WHITE);
   e->setBackgroundColor(COMMON_BACKGROUND_COLOR);
-  e->setBitmap(bitmap_settings_30_30);
   e->setUpdateCallback(settingsIconUpdate);
-  e->setOnPressCallback(startStopButtonOnClick);
+  e->setOnPressCallback(settingsIconOnClick);
   return e;
 }
 
@@ -333,6 +377,117 @@ TextElement* setupModePanel(TextElement* e)
   return e;
 }
 
+void settingsPanelOnClick(DisplayState& state, Element* eRaw)
+{
+  if(state.settings.edit_mode)
+  {
+    state.button_state.menu = true;
+  }
+  else
+  {
+    state.button_state.enter = true;
+  }
+}
+
+void settingsPanelUpdate(const DisplayState& state, Element* eRaw)
+{
+  TextElement* e = (TextElement*) eRaw;
+
+  if(state.mode != DisplayMode::SETTINGS)
+  {
+    e->setHidden(true);
+    return;
+  }
+  e->setHidden(false);
+
+  if(state.settings.edit_mode)
+  {
+    e->setText(state.settings.settings->getCurrentItem()->getValue());
+  }
+  else
+  {
+    e->setText(state.settings.settings->getCurrentItem()->getName());
+  }
+}
+
+TextElement* setupSettingsPanel(TextElement* e)
+{
+  e->setTextColor(TFT_WHITE);
+  e->setBackgroundColor(COMMON_BACKGROUND_COLOR);
+  e->setFontSize(40);
+  e->setUpdateCallback(settingsPanelUpdate);
+  e->setOnPressCallback(settingsPanelOnClick);
+  return e;
+}
+
+void settingsButtonUpdate(const DisplayState& state, Element* eRaw)
+{
+  TextElement* e = (TextElement*) eRaw;
+
+  if(state.mode != DisplayMode::SETTINGS)
+  {
+    e->setHidden(true);
+    return;
+  }
+  e->setHidden(false);
+}
+
+
+void setupSettingsButton(BitmapElement* e)
+{
+  e->setBitmapColor(TFT_WHITE);
+  e->setBackgroundColor(COMMON_BACKGROUND_COLOR);
+  e->setUpdateCallback(settingsButtonUpdate);
+  e->setBitmap(nullptr);
+}
+
+BitmapElement* setupSettingsIncrementButton(BitmapElement* e)
+{
+  setupSettingsButton(e);
+  e->setOnPressCallback([](DisplayState& state, Element* eRaw){state.button_state.start = true;});
+  e->setBitmap(bitmap_arrow_right_240_80);
+  return e;
+}
+
+BitmapElement* setupSettingsDecrementButton(BitmapElement* e)
+{
+  setupSettingsButton(e);
+  e->setOnPressCallback([](DisplayState& state, Element* eRaw){state.button_state.stop = true;});
+  e->setBitmap(bitmap_arrow_left_240_80);
+  return e;
+}
+
+void settingsDetailsPanelUpdate(const DisplayState& state, Element* eRaw)
+{
+  TextElement* e = (TextElement*) eRaw;
+
+  if(state.mode != DisplayMode::SETTINGS)
+  {
+    e->setHidden(true);
+    return;
+  }
+
+  e->setHidden(false);
+
+  if(state.settings.edit_mode)
+  {
+    e->setText("");
+  }
+  else
+  {
+    e->setText(state.settings.settings->getCurrentItem()->getValue());
+  }
+}
+
+TextElement* setupSettingsDetailsPanel(TextElement* e)
+{
+  e->setTextColor(TFT_WHITE);
+  e->setBackgroundColor(COMMON_BACKGROUND_COLOR);
+  e->setFontSize(20);
+  e->setUpdateCallback(settingsDetailsPanelUpdate);
+  return e;
+}
+
 
 void Display::initElements()
 {
@@ -342,7 +497,15 @@ void Display::initElements()
   TextElement* brainStopButton = setupBrainStopButton(createTextElement({0, 200, 240, 120}));
   TextElement* brainStartButton = setupBrainStartButton(createTextElement({240, 200, 240, 120}));
   TextElement* mainPanel = setupMainPanel(createTextElement({0, 70, 480, 110}));
-  TextElement* titlePanel = setupTitlePanel(createTextElement({120, 5, 240, 30}));
-  TextElement* modePanel = setupModePanel(createTextElement({400, 5, 80, 30}));
+
+  // SETTINGS WINDOW
+  TextElement* settingsPanel = setupSettingsPanel(createTextElement({40, 100, 400, 60}));
+  TextElement* settingsDetailsPanel = setupSettingsDetailsPanel(createTextElement({40, 160, 400, 30}));
+  BitmapElement* setingsDecrementButton= setupSettingsDecrementButton(createBitmapElement({0, 240, 240, 80}));
+  BitmapElement* setingsIncrementButton = setupSettingsIncrementButton(createBitmapElement({240, 240, 240, 80}));
+
+  // TOP PANEL
+  TextElement* titlePanel = setupTitlePanel(createTextElement({120, 0, 240, 40}));
+  TextElement* modePanel = setupModePanel(createTextElement({400, 0, 80, 40}));
   BitmapElement* setingsIcon = setupSettingsIcon(createBitmapElement({5, 5, 30, 30}));
 }

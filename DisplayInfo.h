@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Settings.h"
+
 enum GameState
 {
   IDLE,
@@ -19,8 +21,15 @@ typedef struct GameDisplayInfo
   const char* custom = "";
 } GameDisplayInfo;
 
+typedef struct SettingsDisplayInfo
+{
+  const Settings* settings = nullptr;
+  bool edit_mode = true;
+} SettingsDisplayInfo;
+
 typedef struct CustomDisplayInfo
 {
   const char* name = "";
   const void* data = nullptr;
 } CustomDisplayInfo;
+

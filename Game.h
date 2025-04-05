@@ -9,12 +9,10 @@ class Game : public App
 public:
   Game(bool falstartEnabled);
 
-  virtual void tick(Hal* hal);
+  void tick(Hal* hal) override;
 
-  AppChangeType appChangeNeeded();
-  App* getCustomApp();
-
-  static App* initStatic();
+  AppChangeType appChangeNeeded() override;
+  App* getCustomApp() override;
 
 protected:
   virtual void processIdle(Hal* hal, GameDisplayInfo& info);
@@ -36,6 +34,8 @@ protected:
   bool m_falstartEnabled;
 
   Timer m_delayTimer;
+
+  AppChangeType m_changeNeeded = AppChangeType::NONE;
 };
 
 #endif

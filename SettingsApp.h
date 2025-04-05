@@ -1,0 +1,33 @@
+#pragma once
+
+#include "App.h"
+#include "Settings.h"
+
+class SettingsApp : public App
+{
+public:
+  SettingsApp(bool launchGame);
+
+  void tick(Hal* hal) override;
+
+  AppChangeType appChangeNeeded() override;
+  App* getCustomApp() override;
+
+private:
+
+  void processIdle(Hal* hal);
+  void processEdit(Hal* hal);
+
+  void exit(Hal* hal);
+
+private:
+  bool m_startup = true;
+  bool m_launchGame = false;
+  bool m_displayDirty = true;
+  bool m_settingsDirty = false;
+  bool m_shouldClose = false;
+  bool m_editMode = false;
+
+  Settings m_settings;
+
+};

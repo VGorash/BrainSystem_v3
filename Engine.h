@@ -9,7 +9,6 @@ class Engine
 public:
   Engine(Hal* hal, App* (*initialApp)(), App* (*menuApp)()): m_hal(hal)
   {
-    m_app = initialApp();
     if (menuApp)
     {
       m_menuApp = menuApp();
@@ -17,6 +16,15 @@ public:
     else
     {
       m_menuApp = nullptr;
+    }
+
+    if(initialApp)
+    {
+      m_app = initialApp();
+    }
+    else
+    {
+      m_app = m_menuApp;
     }
     
   };

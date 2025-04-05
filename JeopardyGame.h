@@ -10,7 +10,7 @@ class JeopardyGame : public Game
 public:
   JeopardyGame(bool falstartEnabled);
 
-  static App* initStatic();
+  App* getCustomApp() override;
 
 protected:
   void processCountdown(Hal* hal, GameDisplayInfo& info) override;

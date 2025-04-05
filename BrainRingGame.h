@@ -11,7 +11,7 @@ class BrainRingGame : public JeopardyGame
 public:
   BrainRingGame(bool falstartEnabled);
 
-  static App* initStatic();
+  App* getCustomApp() override;
 
 protected:
   void processPress(Hal* hal, GameDisplayInfo& info) override;

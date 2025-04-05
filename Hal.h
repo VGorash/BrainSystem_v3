@@ -2,6 +2,7 @@
 #define HAL_H
 
 #include "DisplayInfo.h"
+#include "Settings.h"
 
 enum HalSound
 {
@@ -17,10 +18,6 @@ typedef struct ButtonState
 {
   bool start = false;
   bool stop = false;
-  bool left = false;
-  bool right = false;
-  bool up = false;
-  bool down = false;
   bool enter = false;
   bool menu = false;
   int custom = -1;
@@ -48,10 +45,15 @@ public:
 
   //display
   virtual void updateDisplay(const GameDisplayInfo& info) = 0;
+  virtual void updateDisplay(const SettingsDisplayInfo& info) = 0;
   virtual void updateDisplay(const CustomDisplayInfo& info) = 0;
 
   //time
   virtual unsigned long getTimeMillis() = 0;
+
+  //settings
+  virtual void saveSettings(const Settings& settings) = 0;
+  virtual void loadSettings(Settings& settings) = 0;
 
 };
 

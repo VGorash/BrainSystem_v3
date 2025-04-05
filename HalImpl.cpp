@@ -1,5 +1,7 @@
 #include "HalImpl.h"
 
+#include <EEPROM.h>
+
 #define BUTTON_PLAYER_4 34
 #define BUTTON_PLAYER_3 35
 #define BUTTON_PLAYER_2 5
@@ -136,7 +138,10 @@ void HalImpl::playerLedBlink(int player)
 
 void HalImpl::signalLedOn()
 {
-  digitalWrite(LED_SIGNAL, 1);
+  if(m_signalLightEnabled)
+  {
+    digitalWrite(LED_SIGNAL, 1);
+  }
 }
 
 void HalImpl::ledsOff()
@@ -152,8 +157,18 @@ void HalImpl::ledsOff()
   m_blinkTimer.stop();
 }
 
+void HalImpl::setSignalLightEnabled(bool enabled)
+{
+  m_signalLightEnabled = enabled;
+}
+
 void HalImpl::sound(HalSound soundType)
 {
+  if(m_soundMode == HalSoundMode::Disabled)
+  {
+    return;
+  }
+
   switch(soundType)
   {
     case HalSound::Start:
@@ -179,11 +194,15 @@ void HalImpl::sound(HalSound soundType)
 
 void HalImpl::sound(unsigned int frequency, unsigned int duration)
 {
-  return;
   m_soundTimer.setTime(duration);
   m_soundTimer.start(this);
   ledcAttach(BUZZER, 50, 10);
   ledcWriteTone(BUZZER, frequency);
+}
+
+void HalImpl::setSoundMode(HalSoundMode mode)
+{
+  m_soundMode = mode;
 }
 
 void HalImpl::updateDisplay(const GameDisplayInfo& info)
@@ -194,13 +213,45 @@ void HalImpl::updateDisplay(const GameDisplayInfo& info)
   m_display.sync(s);
 }
 
-
 void HalImpl::updateDisplay(const CustomDisplayInfo& info)
 {
+  
+}
 
+void HalImpl::updateDisplay(const SettingsDisplayInfo& info)
+{
+  DisplayState s;
+  s.mode = DisplayMode::SETTINGS;
+  s.settings = info;
+  m_display.sync(s);
 }
 
 unsigned long HalImpl::getTimeMillis()
 {
   return millis();
+}
+
+void HalImpl::saveSettings(const Settings& settings)
+{
+  int data[settings.size()];
+  settings.dumpData(data);
+
+  for(int i=0; i<settings.size(); i++)
+  {
+    EEPROM.put(i * sizeof(int), data[i]);
+  }
+
+  EEPROM.commit();
+}
+
+void HalImpl::loadSettings(Settings& settings)
+{
+  int data[settings.size()];
+
+  for(int i=0; i<settings.size(); i++)
+  {
+    EEPROM.get(i * sizeof(int), data[i]);
+  }
+
+  settings.loadData(data);
 }

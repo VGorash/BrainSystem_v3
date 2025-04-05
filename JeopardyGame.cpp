@@ -1,4 +1,5 @@
 #include "JeopardyGame.h"
+#include "BrainRingGame.h"
 
 JeopardyGame::JeopardyGame(bool falstartEnabled) : Game(falstartEnabled)
 {
@@ -54,7 +55,7 @@ const char* JeopardyGame::getName()
   return "СВОЯ ИГРА";
 }
 
-App* JeopardyGame::initStatic()
+App* JeopardyGame::getCustomApp()
 {
-  return new JeopardyGame(true);
+  return new BrainRingGame(false);
 }

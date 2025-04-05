@@ -34,7 +34,8 @@ const char* BrainRingGame::getName()
   return "БРЕЙН-РИНГ";
 }
 
-App* BrainRingGame::initStatic()
+App* BrainRingGame::getCustomApp()
 {
-  return new BrainRingGame(false);
+  return new Game(false);
 }
+

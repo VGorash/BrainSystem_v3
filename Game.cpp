@@ -1,4 +1,5 @@
 #include "Game.h"
+#include "JeopardyGame.h"
 
 Game::Game(bool falstartEnabled) : m_falstartEnabled(falstartEnabled)
 {
@@ -11,6 +12,12 @@ void Game::tick(Hal* hal)
 
   if(m_delayTimer.isStarted())
   {
+    return;
+  }
+
+  if(hal->getButtonState().menu)
+  {
+    m_changeNeeded = AppChangeType::MENU;
     return;
   }
 
@@ -111,6 +118,7 @@ void Game::reset(Hal* hal, GameDisplayInfo& info)
   m_state = GameState::IDLE;
   m_displayDirty = true;
   hal->ledsOff();
+  hal->sound(HalSound::None);
 }
 
 void Game::press(Hal* hal, GameDisplayInfo& info, int player)
@@ -142,15 +150,10 @@ const char* Game::getName()
 
 AppChangeType Game::appChangeNeeded()
 {
-  return AppChangeType::NONE;
+  return m_changeNeeded;
 }
 
 App* Game::getCustomApp()
 {
-  return new Game(true);
-}
-
-App* Game::initStatic()
-{
-  return new Game(false);
+  return new JeopardyGame(false);
 }
