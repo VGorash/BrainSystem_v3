@@ -9,6 +9,7 @@ class Game : public App
 public:
   Game(bool falstartEnabled);
 
+  void init(Hal* hal) override;
   void tick(Hal* hal) override;
 
   AppChangeType appChangeNeeded() override;

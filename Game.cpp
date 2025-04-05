@@ -3,7 +3,12 @@
 
 Game::Game(bool falstartEnabled) : m_falstartEnabled(falstartEnabled)
 {
+  // do nothing
+}
 
+void Game::init(Hal* hal)
+{
+  // do nothing
 }
 
 void Game::tick(Hal* hal)

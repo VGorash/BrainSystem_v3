@@ -47,18 +47,21 @@ SettingsApp::SettingsApp(bool launchGame) : m_launchGame(launchGame)
   m_settings.addItem("Световой сигнал", 2, onOffNames);
 }
 
-void SettingsApp::tick(Hal* hal)
+void SettingsApp::init(Hal* hal)
 {
-  if(m_startup)
-  {
-    hal->loadSettings(m_settings);
-    m_startup = false;
-  }
+  hal->loadSettings(m_settings);
 
   if(m_launchGame)
   {
     m_launchGame = false;
     exit(hal);
+  }
+}
+
+void SettingsApp::tick(Hal* hal)
+{
+  if(m_shouldClose)
+  {
     return;
   }
 

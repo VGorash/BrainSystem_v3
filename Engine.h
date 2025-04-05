@@ -12,6 +12,7 @@ public:
     if (menuApp)
     {
       m_menuApp = menuApp();
+      m_menuApp->init(m_hal);
     }
     else
     {
@@ -21,6 +22,7 @@ public:
     if(initialApp)
     {
       m_app = initialApp();
+      m_app->init(m_hal);
     }
     else
     {
@@ -41,6 +43,7 @@ public:
       {
         App* temp = m_app;
         m_app = m_app->getCustomApp();
+        m_app->init(m_hal);
         if(temp != m_menuApp)
         {
           delete temp;

@@ -1,4 +1,5 @@
-#pragma once
+#ifndef HAL_IMPL_H
+#define HAL_IMPL_H
 
 #include "Hal.h"
 #include "Timer.h"
@@ -60,3 +61,5 @@ private:
   HalSoundMode m_soundMode;
   bool m_signalLightEnabled;
 };
+
+#endif

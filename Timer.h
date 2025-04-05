@@ -1,4 +1,5 @@
-#pragma once
+#ifndef TIMER_H
+#define TIMER_H
 
 #include "Hal.h"
 
@@ -64,3 +65,5 @@ private:
   unsigned long m_startTime;
   unsigned long m_time;
 };
+
+#endif

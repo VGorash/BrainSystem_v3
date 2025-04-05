@@ -1,4 +1,5 @@
-#pragma once
+#ifndef DISPLAY_INFO_H
+#define DISPLAY_INFO_H
 
 #include "Settings.h"
 
@@ -33,3 +34,4 @@ typedef struct CustomDisplayInfo
   const void* data = nullptr;
 } CustomDisplayInfo;
 
+#endif

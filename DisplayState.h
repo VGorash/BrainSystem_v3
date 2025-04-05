@@ -1,4 +1,5 @@
-#pragma once
+#ifndef DISPLAY_STATE_H
+#define DISPLAY_STATE_H
 
 #include "Hal.h"
 
@@ -24,3 +25,5 @@ typedef struct DisplayState
   ButtonState button_state;
 
 } DisplayState;
+
+#endif
