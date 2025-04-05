@@ -19,12 +19,14 @@
 #define SOUND_TONE_PRESS 1000
 #define SOUND_TONE_FALSTART 500
 #define SOUND_TONE_TICK 1500
+#define SOUND_TONE_SIGNAL 1500
 #define SOUND_TONE_END 250
 
 #define SOUND_DURATION_START 1000
 #define SOUND_DURATION_PRESS 1000
 #define SOUND_DURATION_FALSTART 500
 #define SOUND_DURATION_TICK 250
+#define SOUND_DURATION_SIGNAL 1000
 #define SOUND_DURATION_END 1000
 
 static const int playerButtonPins[NUM_PLAYERS] = {BUTTON_PLAYER_1, BUTTON_PLAYER_2, BUTTON_PLAYER_3, BUTTON_PLAYER_4};
@@ -166,6 +168,7 @@ void HalImpl::sound(HalSound soundType)
 {
   if(m_soundMode == HalSoundMode::Disabled)
   {
+    ledcDetach(BUZZER);
     return;
   }
 
@@ -182,6 +185,9 @@ void HalImpl::sound(HalSound soundType)
       break;
     case HalSound::Tick:
       sound(SOUND_TONE_TICK, SOUND_DURATION_TICK);
+      break;
+    case HalSound::Signal:
+      sound(SOUND_TONE_SIGNAL, SOUND_DURATION_SIGNAL);
       break;
     case HalSound::End:
       sound(SOUND_TONE_END, SOUND_DURATION_END);

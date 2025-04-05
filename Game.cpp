@@ -85,6 +85,7 @@ void Game::processCountdown(Hal* hal, GameDisplayInfo& info)
   if(buttonState.stop)
   {
     reset(hal, info);
+    hal->sound(HalSound::None);
     return;
   }
 }
@@ -118,7 +119,6 @@ void Game::reset(Hal* hal, GameDisplayInfo& info)
   m_state = GameState::IDLE;
   m_displayDirty = true;
   hal->ledsOff();
-  hal->sound(HalSound::None);
 }
 
 void Game::press(Hal* hal, GameDisplayInfo& info, int player)

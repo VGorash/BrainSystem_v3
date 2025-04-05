@@ -10,6 +10,7 @@ enum HalSound
   Press,
   Falstart,
   Tick,
+  Signal,
   End,
   None
 };
