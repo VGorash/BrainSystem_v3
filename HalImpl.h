@@ -1,9 +1,8 @@
 #ifndef HAL_IMPL_H
 #define HAL_IMPL_H
 
-#include "Core/Hal.h"
-
-#include "Timer.h"
+#include "src/Framework/Core/Hal.h"
+#include "src/Framework/Timer.h"
 
 #include "Display.h"
 

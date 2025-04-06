@@ -1,8 +1,8 @@
 #ifndef SETTINGS_APP_H
 #define SETTINGS_APP_H
 
-#include "Core/App.h"
-#include "Core/Settings.h"
+#include "src/Framework/Core/App.h"
+#include "src/Framework/Core/Settings.h"
 
 namespace vgs
 {

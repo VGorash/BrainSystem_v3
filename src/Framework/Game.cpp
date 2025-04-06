@@ -1,5 +1,4 @@
 #include "Game.h"
-#include "JeopardyGame.h"
 
 using namespace vgs;
 
@@ -162,5 +161,5 @@ AppChangeType Game::appChangeNeeded()
 
 App* Game::getCustomApp()
 {
-  return new JeopardyGame(false);
+  return nullptr;
 }

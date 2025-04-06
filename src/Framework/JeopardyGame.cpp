@@ -1,5 +1,4 @@
 #include "JeopardyGame.h"
-#include "BrainRingGame.h"
 
 #define JEOPARDY_GAME_TIME 7
 
@@ -57,9 +56,4 @@ void JeopardyGame::press(Hal* hal, GameDisplayInfo& info, int player)
 const char* JeopardyGame::getName()
 {
   return "СВОЯ ИГРА";
-}
-
-App* JeopardyGame::getCustomApp()
-{
-  return new BrainRingGame(false);
 }

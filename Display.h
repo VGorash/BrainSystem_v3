@@ -13,7 +13,7 @@
 #include <OpenFontRender.h>
 #include <EncButton.h>
 
-#include "Core/Hal.h"
+#include "src/Framework/Core/Hal.h"
 
 #include "graphics.h"
 

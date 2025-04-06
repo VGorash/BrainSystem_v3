@@ -1,6 +1,9 @@
 #include "SettingsApp.h"
-#include "BrainRingGame.h"
 #include "HalImpl.h"
+
+#include "src/Framework/Game.h"
+#include "src/Framework/JeopardyGame.h"
+#include "src/Framework/BrainRingGame.h"
 
 using namespace vgs;
 

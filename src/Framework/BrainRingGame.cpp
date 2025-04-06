@@ -70,9 +70,3 @@ const char* BrainRingGame::getName()
 {
   return "БРЕЙН-РИНГ";
 }
-
-App* BrainRingGame::getCustomApp()
-{
-  return new Game(false);
-}
-
