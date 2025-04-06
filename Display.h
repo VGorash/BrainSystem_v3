@@ -13,8 +13,9 @@
 #include <OpenFontRender.h>
 #include <EncButton.h>
 
+#include "Core/Hal.h"
+
 #include "graphics.h"
-#include "Hal.h"
 
 #define NUM_PLAYERS 4
 

@@ -1,7 +1,7 @@
 #ifndef DISPLAY_STATE_H
 #define DISPLAY_STATE_H
 
-#include "Hal.h"
+#include "Core/Hal.h"
 
 enum class DisplayMode
 {

@@ -1,6 +1,6 @@
-#include "Engine.h"
+#include "Core/Engine.h"
+
 #include "HalImpl.h"
-#include "BrainRingGame.h"
 #include "SettingsApp.h"
 
 #include <EEPROM.h>

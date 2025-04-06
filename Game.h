@@ -1,7 +1,8 @@
 #ifndef GAME_H
 #define GAME_H
 
-#include "App.h"
+#include "Core/App.h"
+
 #include "Timer.h"
 
 namespace vgs

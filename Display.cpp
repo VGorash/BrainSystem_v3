@@ -1,6 +1,5 @@
 #include "Display.h"
 #include "binaryttf.h"
-#include "graphics.h"
 #include "icons.h"
 
 #define SCREEN_WIDTH 480

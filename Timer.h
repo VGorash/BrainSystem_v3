@@ -1,7 +1,7 @@
 #ifndef TIMER_H
 #define TIMER_H
 
-#include "Hal.h"
+#include "Core/Hal.h"
 
 namespace vgs
 {
