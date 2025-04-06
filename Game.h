@@ -4,6 +4,9 @@
 #include "App.h"
 #include "Timer.h"
 
+namespace vgs
+{
+
 class Game : public App
 {
 public:
@@ -29,14 +32,16 @@ protected:
   virtual const char* getName();
 
 protected:
-  GameState m_state = GameState::IDLE;
+  GameState m_state = GameState::Idle;
   bool m_displayDirty = true;
 
   bool m_falstartEnabled;
 
   Timer m_delayTimer;
 
-  AppChangeType m_changeNeeded = AppChangeType::NONE;
+  AppChangeType m_changeNeeded = AppChangeType::None;
 };
+
+}
 
 #endif

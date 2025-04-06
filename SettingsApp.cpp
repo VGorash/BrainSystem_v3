@@ -2,6 +2,8 @@
 #include "BrainRingGame.h"
 #include "HalImpl.h"
 
+using namespace vgs;
+
 struct GameInfo
 {
   const char* name;
@@ -166,10 +168,10 @@ AppChangeType SettingsApp::appChangeNeeded()
   {
     m_displayDirty = true;
     m_shouldClose = false;
-    return AppChangeType::CUSTOM;
+    return AppChangeType::Custom;
   }
 
-  return AppChangeType::NONE;
+  return AppChangeType::None;
 }
 
 App* SettingsApp::getCustomApp()

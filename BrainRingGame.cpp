@@ -1,5 +1,12 @@
 #include "BrainRingGame.h"
 
+#define BRAIN_RING_TIME 60
+#define BRAIN_RING_WRONG_ANSWER_TIME 20
+#define BRAIN_RING_SIGNAL_TIME 10
+#define BRAIN_RING_TICKS_TIME 5
+
+using namespace vgs;
+
 BrainRingGame::BrainRingGame(bool falstartEnabled) : JeopardyGame(falstartEnabled)
 {
 
@@ -51,7 +58,7 @@ void BrainRingGame::processCountdown(Hal* hal, GameDisplayInfo& info)
 
 void BrainRingGame::start(Hal* hal, GameDisplayInfo& info)
 {
-  m_secondsLeft = m_state == GameState::PRESS ? BRAIN_RING_WRONG_ANSWER_TIME : BRAIN_RING_TIME;
+  m_secondsLeft = m_state == GameState::Press ? BRAIN_RING_WRONG_ANSWER_TIME : BRAIN_RING_TIME;
 
   info.gameTime = m_secondsLeft;
   m_gameTimer.start(hal);

@@ -3,11 +3,14 @@
 
 #include "Hal.h"
 
-enum AppChangeType
+namespace vgs
 {
-  NONE,
-  MENU,
-  CUSTOM
+
+enum class AppChangeType
+{
+  None,
+  Menu,
+  Custom
 };
 
 class App
@@ -19,5 +22,7 @@ public:
   virtual AppChangeType appChangeNeeded() = 0;
   virtual App* getCustomApp() = 0;
 };
+
+} // namespace vgs
 
 #endif

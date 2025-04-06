@@ -7,7 +7,9 @@
 #define SCREEN_HEIGHT 320
 #define MAX_ELEMENTS 64
 
-static const int playerColors[NUM_PLAYERS] = {TFT_YELLOW, TFT_BLUE, TFT_GREEN, TFT_RED};
+using namespace vgs;
+
+constexpr int playerColors[NUM_PLAYERS] = {TFT_YELLOW, TFT_BLUE, TFT_GREEN, TFT_RED};
 
 Display::Display()
 {
@@ -129,18 +131,18 @@ ButtonState Display::syncTouchscreen()
 void startStopButtonUpdate(const DisplayState& state, Element* eRaw)
 {
   TextElement* e = (TextElement*) eRaw;
-  if(state.mode != DisplayMode::GAME)
+  if(state.mode != DisplayMode::Game)
   {
     e->setHidden(true);
     return;
   }
-  if(state.game.name == "БРЕЙН-РИНГ" && state.game.state == GameState::PRESS)
+  if(state.game.name == "БРЕЙН-РИНГ" && state.game.state == GameState::Press)
   {
     e->setHidden(true);
     return;
   }
   e->setHidden(false);
-  if(state.game.state == GameState::IDLE)
+  if(state.game.state == GameState::Idle)
   {
     e->setText("Запуск");
     e->setBackgroundColor(TFT_GREEN);
@@ -156,7 +158,7 @@ void startStopButtonUpdate(const DisplayState& state, Element* eRaw)
 
 void startStopButtonOnClick(DisplayState& state, Element* e)
 {
-  if(state.game.state == GameState::IDLE)
+  if(state.game.state == GameState::Idle)
   {
     state.button_state.start = true;
   }
@@ -179,12 +181,12 @@ TextElement* setupStartStopButton(TextElement* e)
 void brainStartStopButtonUpdate(const DisplayState& state, Element* eRaw)
 {
   TextElement* e = (TextElement*) eRaw;
-  if(state.mode != DisplayMode::GAME)
+  if(state.mode != DisplayMode::Game)
   {
     e->setHidden(true);
     return;
   }
-  if(state.game.name != "БРЕЙН-РИНГ" || state.game.state != GameState::PRESS)
+  if(state.game.name != "БРЕЙН-РИНГ" || state.game.state != GameState::Press)
   {
     e->setHidden(true);
     return;
@@ -232,7 +234,7 @@ void mainPanelUpdate(const DisplayState& state, Element* eRaw)
 {
   TextElement* e = (TextElement*) eRaw;
 
-  if(state.mode != DisplayMode::GAME)
+  if(state.mode != DisplayMode::Game)
   {
     e->setHidden(true);
     return;
@@ -242,13 +244,13 @@ void mainPanelUpdate(const DisplayState& state, Element* eRaw)
 
   switch (state.game.state)
   {
-    case GameState::IDLE:
+    case GameState::Idle:
     {
       e->setText("--");
       e->setTextColor(TFT_WHITE);
       break;
     }
-    case GameState::COUNTDOWN:
+    case GameState::Countdown:
     {
       if(state.game.gameTime >= 0)
       {
@@ -261,13 +263,13 @@ void mainPanelUpdate(const DisplayState& state, Element* eRaw)
       e->setTextColor(TFT_WHITE);
       break;
     }
-    case GameState::PRESS:
+    case GameState::Press:
     {
       e->setText(String("К") + String(state.game.player + 1));
       e->setTextColor(playerColors[state.game.player % 4]);
       break;
     }
-    case GameState::FALSTART:
+    case GameState::Falstart:
     {
       e->setText("ФС");
       e->setTextColor(playerColors[state.game.player % 4]);
@@ -289,11 +291,11 @@ void titlePanelUpdate(const DisplayState& state, Element* eRaw)
   TextElement* e = (TextElement*) eRaw;
   e->setHidden(false);
 
-  if(state.mode == DisplayMode::GAME)
+  if(state.mode == DisplayMode::Game)
   {
     e->setText(state.game.name);
   }
-  if(state.mode == DisplayMode::SETTINGS)
+  if(state.mode == DisplayMode::Settings)
   {
     if(state.settings.edit_mode)
     {
@@ -328,15 +330,15 @@ void settingsIconUpdate(const DisplayState& state, Element* eRaw)
 
   e->setHidden(false);
 
-  if(state.mode == DisplayMode::GAME && state.game.state == GameState::IDLE)
+  if(state.mode == DisplayMode::Game && state.game.state == GameState::Idle)
   {
     e->setBitmap(bitmap_settings_30_30);
   }
-  else if(state.mode == DisplayMode::SETTINGS && state.settings.edit_mode)
+  else if(state.mode == DisplayMode::Settings && state.settings.edit_mode)
   {
     e->setBitmap(bitmap_back_30_30);
   }
-  else if(state.mode == DisplayMode::SETTINGS)
+  else if(state.mode == DisplayMode::Settings)
   {
     e->setBitmap(bitmap_close_30_30);
   }
@@ -358,7 +360,7 @@ BitmapElement* setupSettingsIcon(BitmapElement* e)
 void modePanelUpdate(const DisplayState& state, Element* eRaw)
 {
   TextElement* e = (TextElement*) eRaw;
-  if(state.mode != DisplayMode::GAME)
+  if(state.mode != DisplayMode::Game)
   {
     e->setHidden(true);
     return;
@@ -393,7 +395,7 @@ void settingsPanelUpdate(const DisplayState& state, Element* eRaw)
 {
   TextElement* e = (TextElement*) eRaw;
 
-  if(state.mode != DisplayMode::SETTINGS)
+  if(state.mode != DisplayMode::Settings)
   {
     e->setHidden(true);
     return;
@@ -424,7 +426,7 @@ void settingsButtonUpdate(const DisplayState& state, Element* eRaw)
 {
   TextElement* e = (TextElement*) eRaw;
 
-  if(state.mode != DisplayMode::SETTINGS)
+  if(state.mode != DisplayMode::Settings)
   {
     e->setHidden(true);
     return;
@@ -461,7 +463,7 @@ void settingsDetailsPanelUpdate(const DisplayState& state, Element* eRaw)
 {
   TextElement* e = (TextElement*) eRaw;
 
-  if(state.mode != DisplayMode::SETTINGS)
+  if(state.mode != DisplayMode::Settings)
   {
     e->setHidden(true);
     return;

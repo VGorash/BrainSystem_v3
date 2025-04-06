@@ -3,26 +3,26 @@
 
 #include "Hal.h"
 
-enum DisplayMode
+enum class DisplayMode
 {
-  GAME,
-  SETTINGS
+  Game,
+  Settings
 };
 
 typedef struct DisplayState
 {
   // ---- INPUT ----
   DisplayMode mode;
-  GameDisplayInfo game;
-  CustomDisplayInfo custom;
-  SettingsDisplayInfo settings;
+  vgs::GameDisplayInfo game;
+  vgs::CustomDisplayInfo custom;
+  vgs::SettingsDisplayInfo settings;
 
   // ---- STATE ----
   bool dirty = true;
   bool modeChanged = false;
 
   // ---- OUTPUT ----
-  ButtonState button_state;
+  vgs::ButtonState button_state;
 
 } DisplayState;
 

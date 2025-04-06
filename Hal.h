@@ -1,10 +1,12 @@
 #ifndef HAL_H
 #define HAL_H
 
-#include "DisplayInfo.h"
 #include "Settings.h"
 
-enum HalSound
+namespace vgs
+{
+
+enum class HalSound
 {
   Start,
   Press,
@@ -14,6 +16,37 @@ enum HalSound
   End,
   None
 };
+
+enum class GameState
+{
+  Idle,
+  Countdown,
+  Press,
+  Falstart
+};
+
+typedef struct GameDisplayInfo
+{
+  const char* name = "";
+  bool falstart_enabled = false;
+  GameState state = GameState::Idle;
+  int gameTime = -1;
+  int pressTime = -1;
+  int player = -1;
+  const char* custom = "";
+} GameDisplayInfo;
+
+typedef struct SettingsDisplayInfo
+{
+  const Settings* settings = nullptr;
+  bool edit_mode = true;
+} SettingsDisplayInfo;
+
+typedef struct CustomDisplayInfo
+{
+  const char* name = "";
+  const void* data = nullptr;
+} CustomDisplayInfo;
 
 typedef struct ButtonState
 {
@@ -57,5 +90,7 @@ public:
   virtual void loadSettings(Settings& settings) = 0;
 
 };
+
+} // namespace vgs
 
 #endif

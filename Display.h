@@ -29,7 +29,7 @@ public:
   void tick();
 
   void sync(const DisplayState& state);
-  ButtonState syncTouchscreen();
+  vgs::ButtonState syncTouchscreen();
 
 private:
   void initElements();

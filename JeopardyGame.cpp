@@ -1,6 +1,10 @@
 #include "JeopardyGame.h"
 #include "BrainRingGame.h"
 
+#define JEOPARDY_GAME_TIME 7
+
+using namespace vgs;
+
 JeopardyGame::JeopardyGame(bool falstartEnabled) : Game(falstartEnabled)
 {
   m_gameTimer.setPeriodMode(true);

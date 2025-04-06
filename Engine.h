@@ -4,6 +4,9 @@
 #include "Hal.h"
 #include "App.h"
 
+namespace vgs
+{
+
 class Engine
 {
 public:
@@ -39,7 +42,7 @@ public:
 
     switch(m_app->appChangeNeeded())
     {
-      case AppChangeType::CUSTOM:
+      case AppChangeType::Custom:
       {
         App* temp = m_app;
         m_app = m_app->getCustomApp();
@@ -50,7 +53,7 @@ public:
         }
         break;
       }
-      case AppChangeType::MENU:
+      case AppChangeType::Menu:
       {
         if(!m_menuApp)
         {
@@ -72,5 +75,7 @@ private:
   App* m_app;
   App* m_menuApp;
 };
+
+} //namespace vgs
 
 #endif

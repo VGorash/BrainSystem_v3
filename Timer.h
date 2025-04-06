@@ -3,6 +3,9 @@
 
 #include "Hal.h"
 
+namespace vgs
+{
+
 class Timer
 {
 public:
@@ -65,5 +68,7 @@ private:
   unsigned long m_startTime;
   unsigned long m_time;
 };
+
+} // namespace vgs
 
 #endif

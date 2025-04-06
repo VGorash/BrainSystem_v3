@@ -3,7 +3,8 @@
 
 #include "Game.h"
 
-#define JEOPARDY_GAME_TIME 7
+namespace vgs
+{
 
 class JeopardyGame : public Game
 {
@@ -25,5 +26,7 @@ protected:
   Timer m_gameTimer;
   int m_secondsLeft = 0;
 };
+
+} //namespace vgs
 
 #endif

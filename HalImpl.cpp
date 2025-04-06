@@ -29,6 +29,8 @@
 #define SOUND_DURATION_SIGNAL 1000
 #define SOUND_DURATION_END 1000
 
+using namespace vgs;
+
 static const int playerButtonPins[NUM_PLAYERS] = {BUTTON_PLAYER_1, BUTTON_PLAYER_2, BUTTON_PLAYER_3, BUTTON_PLAYER_4};
 static const int playerLedPins[NUM_PLAYERS] = {LED_PLAYER_1, LED_PLAYER_2, LED_PLAYER_3, LED_PLAYER_4};
 
@@ -214,7 +216,7 @@ void HalImpl::setSoundMode(HalSoundMode mode)
 void HalImpl::updateDisplay(const GameDisplayInfo& info)
 {
   DisplayState s;
-  s.mode = DisplayMode::GAME;
+  s.mode = DisplayMode::Game;
   s.game = info;
   m_display.sync(s);
 }
@@ -227,7 +229,7 @@ void HalImpl::updateDisplay(const CustomDisplayInfo& info)
 void HalImpl::updateDisplay(const SettingsDisplayInfo& info)
 {
   DisplayState s;
-  s.mode = DisplayMode::SETTINGS;
+  s.mode = DisplayMode::Settings;
   s.settings = info;
   m_display.sync(s);
 }

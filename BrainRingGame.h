@@ -3,10 +3,8 @@
 
 #include "JeopardyGame.h"
 
-#define BRAIN_RING_TIME 60
-#define BRAIN_RING_WRONG_ANSWER_TIME 20
-#define BRAIN_RING_SIGNAL_TIME 10
-#define BRAIN_RING_TICKS_TIME 5
+namespace vgs
+{
 
 class BrainRingGame : public JeopardyGame
 {
@@ -24,5 +22,7 @@ protected:
   const char* getName() override;
   
 };
+
+} // namespace vgs
 
 #endif

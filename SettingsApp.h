@@ -4,6 +4,9 @@
 #include "App.h"
 #include "Settings.h"
 
+namespace vgs
+{
+
 class SettingsApp : public App
 {
 public:
@@ -33,5 +36,7 @@ private:
   Settings m_settings;
 
 };
+
+} // namespace vgs
 
 #endif

@@ -4,6 +4,8 @@
 #include "SettingsApp.h"
 
 #include <EEPROM.h>
+
+using namespace vgs;
  
 HalImpl* hal;
 Engine* engine;

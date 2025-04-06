@@ -6,13 +6,13 @@
 
 #include "Display.h"
 
-enum HalSoundMode
+enum class HalSoundMode
 {
   Normal,
   Disabled
 };
 
-class HalImpl : public Hal
+class HalImpl : public vgs::Hal
 {
 public:
   HalImpl();
@@ -22,7 +22,7 @@ public:
   void tick() override;
 
   //buttons
-  ButtonState getButtonState() override;
+  vgs::ButtonState getButtonState() override;
 
   //leds
   void playerLedOn(int player) override;
@@ -32,29 +32,29 @@ public:
   void setSignalLightEnabled(bool enabled);
 
   //sound
-  void sound(HalSound soundType) override;
+  void sound(vgs::HalSound soundType) override;
   void sound(unsigned int frequency, unsigned int duration) override;
   void setSoundMode(HalSoundMode mode);
 
   //display
-  void updateDisplay(const GameDisplayInfo& info) override;
-  void updateDisplay(const SettingsDisplayInfo& info) override;
-  void updateDisplay(const CustomDisplayInfo& info) override;
+  void updateDisplay(const vgs::GameDisplayInfo& info) override;
+  void updateDisplay(const vgs::SettingsDisplayInfo& info) override;
+  void updateDisplay(const vgs::CustomDisplayInfo& info) override;
 
   //time
   unsigned long getTimeMillis() override;
 
   //settings
-  void saveSettings(const Settings& settings) override;
-  void loadSettings(Settings& settings) override;
+  void saveSettings(const vgs::Settings& settings) override;
+  void loadSettings(vgs::Settings& settings) override;
 
 private:  
   Display m_display;
 
   Button m_playerButtons[NUM_PLAYERS];
 
-  Timer m_blinkTimer;
-  Timer m_soundTimer;
+  vgs::Timer m_blinkTimer;
+  vgs::Timer m_soundTimer;
   bool m_blinkState = 0;
   bool m_blinkingLeds[NUM_PLAYERS];
 

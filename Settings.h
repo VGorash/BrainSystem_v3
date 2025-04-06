@@ -1,6 +1,9 @@
 #ifndef SETTINGS_H
 #define SETTINGS_H
 
+namespace vgs
+{
+
 class SettingsItem
 {
 friend class Settings;
@@ -251,5 +254,7 @@ private:
   SettingsItem* m_currentItem = nullptr;
 
 };
+
+} //namespace vgs
 
 #endif
