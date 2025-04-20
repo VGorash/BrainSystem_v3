@@ -1,10 +1,15 @@
 #ifndef HAL_IMPL_H
 #define HAL_IMPL_H
 
+#define USE_ARDUINO_UART_LINK
+
 #include "src/Framework/Core/Hal.h"
 #include "src/Framework/Timer.h"
+#include "src/Link/ArduinoUartLink.h"
 
 #include "Display.h"
+
+#define NUM_UART_LINKS 3
 
 enum class HalSoundMode
 {
@@ -48,6 +53,9 @@ public:
   void saveSettings(const vgs::Settings& settings) override;
   void loadSettings(vgs::Settings& settings) override;
 
+private:
+  void sendLinkCommand(int linkNumber, bool useLink, vgs::link::Command command, unsigned int data = 0);
+
 private:  
   Display m_display;
 
@@ -60,6 +68,8 @@ private:
 
   HalSoundMode m_soundMode;
   bool m_signalLightEnabled;
+
+  vgs::link::UartLink* m_uartLinks[NUM_UART_LINKS];
 };
 
 #endif

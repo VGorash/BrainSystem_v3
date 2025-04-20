@@ -15,6 +15,11 @@
 
 #define BUZZER 18
 
+#define UART1_RX 27
+#define UART1_TX 26
+#define UART2_RX 16
+#define UART2_TX 17
+
 #define SOUND_TONE_START 2000
 #define SOUND_TONE_PRESS 1000
 #define SOUND_TONE_FALSTART 500
@@ -40,15 +45,24 @@ HalImpl::HalImpl()
   m_blinkTimer.setPeriodMode(true);
 
   m_soundTimer.setPeriodMode(false);
+  
+  m_uartLinks[0] = new link::ArduinoUartLink(&Serial);
+  m_uartLinks[1] = new link::ArduinoUartLink(&Serial1);
+  m_uartLinks[2] = new link::ArduinoUartLink(&Serial2);
 }
 
 HalImpl::~HalImpl()
 {
-
+  for (int i=0; i<NUM_UART_LINKS; i++)
+  {
+    delete m_uartLinks[i];
+  }
 }
 
 void HalImpl::init()
 {
+  EEPROM.begin(512);
+
   m_display.init();
 
   for(int i=0; i<NUM_PLAYERS; i++)
@@ -59,6 +73,12 @@ void HalImpl::init()
 
   pinMode(LED_SIGNAL, OUTPUT);
 
+  pinMode(UART1_RX, INPUT_PULLUP);
+  pinMode(UART2_RX, INPUT_PULLUP);
+
+  Serial.begin(9600, SERIAL_8N1);
+  Serial1.begin(9600, SERIAL_8N1, UART1_RX, UART1_TX);
+  Serial2.begin(9600, SERIAL_8N1, UART2_RX, UART2_TX);
 }
 
 void HalImpl::tick()
@@ -87,6 +107,11 @@ void HalImpl::tick()
   {
     ledcDetach(BUZZER);
   }
+
+  for (int i=0; i<NUM_UART_LINKS; i++)
+  {
+    m_uartLinks[i]->tick();
+  }
 }
 
 
@@ -103,6 +128,18 @@ ButtonState HalImpl::getButtonState()
     }
   }
 
+  if(s.player < 0)
+  {
+    for (int i=0; i<NUM_UART_LINKS; i++)
+    {
+      if(m_uartLinks[i]->getCommand() == link::Command::PlayerButton)
+      {
+        s.player = m_uartLinks[i]->getData() + NUM_PLAYERS + UART_LINK_MAX_PLAYERS * i;
+        break;
+      }
+    }
+  }
+
   return s;
 }
 
@@ -112,10 +149,23 @@ void HalImpl::playerLedOn(int player)
   {
     return;
   }
-  if(player < 4)
+
+  if(player < NUM_PLAYERS)
   {
     digitalWrite(playerLedPins[player], 1);
     return;
+  }
+
+  player -= NUM_PLAYERS;
+
+  if(player < UART_LINK_MAX_PLAYERS * NUM_UART_LINKS)
+  {
+    sendLinkCommand(player / UART_LINK_MAX_PLAYERS, true, link::Command::PlayerLedOn, player % UART_LINK_MAX_PLAYERS);
+  }
+
+  for (int i=0; i<NUM_UART_LINKS; i++)
+  {
+    sendLinkCommand(i, true, link::Command::DisplayPlayerLedOn, player % UART_LINK_MAX_PLAYERS);
   }
 }
 
@@ -125,7 +175,7 @@ void HalImpl::playerLedBlink(int player)
   {
     return;
   }
-  if(player < 4)
+  if(player < NUM_PLAYERS)
   {
     playerLedOn(player);
     m_blinkingLeds[player] = true;
@@ -138,6 +188,18 @@ void HalImpl::playerLedBlink(int player)
 
     return;
   }
+
+  player -= NUM_PLAYERS;
+
+  if(player < UART_LINK_MAX_PLAYERS * NUM_UART_LINKS)
+  {
+    sendLinkCommand(player / UART_LINK_MAX_PLAYERS, true, link::Command::PlayerLedBlink, player % UART_LINK_MAX_PLAYERS);
+  }
+
+  for (int i=0; i<NUM_UART_LINKS; i++)
+  {
+    sendLinkCommand(i, true, link::Command::DisplayPlayerLedBlink, player % UART_LINK_MAX_PLAYERS);
+  }
 }
 
 void HalImpl::signalLedOn()
@@ -145,6 +207,11 @@ void HalImpl::signalLedOn()
   if(m_signalLightEnabled)
   {
     digitalWrite(LED_SIGNAL, 1);
+  }
+
+  for (int i=0; i<NUM_UART_LINKS; i++)
+  {
+    sendLinkCommand(i, true, link::Command::SignalLedOn);
   }
 }
 
@@ -159,6 +226,11 @@ void HalImpl::ledsOff()
   }
 
   m_blinkTimer.stop();
+
+  for (int i=0; i<NUM_UART_LINKS; i++)
+  {
+    sendLinkCommand(i, true, link::Command::LedsOff);
+  }
 }
 
 void HalImpl::setSignalLightEnabled(bool enabled)
@@ -262,4 +334,14 @@ void HalImpl::loadSettings(Settings& settings)
   }
 
   settings.loadData(data);
+}
+
+void HalImpl::sendLinkCommand(int linkNumber, bool useLink, vgs::link::Command command, unsigned int data)
+{
+  if(!useLink || linkNumber >= NUM_UART_LINKS)
+  {
+    return;
+  }
+
+  m_uartLinks[linkNumber]->send(command, data);
 }

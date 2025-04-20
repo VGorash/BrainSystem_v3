@@ -17,17 +17,12 @@ App* initSettings()
   return new SettingsApp(true);
 }
 
-void setup() {
-  Serial.begin(9600);
-  delay(100);
-
-  EEPROM.begin(512);
-
+void setup()
+{
   hal = new HalImpl();
   hal->init();
 
   engine = new Engine(hal, nullptr, initSettings);
-
 }
 
 void loop() {

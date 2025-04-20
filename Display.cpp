@@ -264,14 +264,21 @@ void mainPanelUpdate(const DisplayState& state, Element* eRaw)
     }
     case GameState::Press:
     {
-      e->setText(String("К") + String(state.game.player + 1));
-      e->setTextColor(playerColors[state.game.player % 4]);
+      if(state.game.player >= NUM_PLAYERS)
+      {
+        e->setText(String("С") + String(state.game.player / 16 + 1) + String("-К") + String(state.game.player % 16 - NUM_PLAYERS + 1));
+      }
+      else
+      {
+        e->setText(String("К") + String(state.game.player + 1));
+      }
+      e->setTextColor(playerColors[state.game.player % NUM_PLAYERS]);
       break;
     }
     case GameState::Falstart:
     {
       e->setText("ФС");
-      e->setTextColor(playerColors[state.game.player % 4]);
+      e->setTextColor(playerColors[state.game.player % NUM_PLAYERS]);
       break;
     }
   }
