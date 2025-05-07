@@ -2,6 +2,7 @@
 #define DISPLAY_STATE_H
 
 #include "src/Framework/Core/Hal.h"
+#include "src/Settings/Settings.h"
 
 enum class DisplayMode
 {
@@ -9,13 +10,18 @@ enum class DisplayMode
   Settings
 };
 
+struct SettingsDisplayInfo
+{
+  bool edit_mode;
+  const vgs::settings::Settings* settings;
+};
+
 typedef struct DisplayState
 {
   // ---- INPUT ----
   DisplayMode mode;
   vgs::GameDisplayInfo game;
-  vgs::CustomDisplayInfo custom;
-  vgs::SettingsDisplayInfo settings;
+  SettingsDisplayInfo settings;
 
   // ---- STATE ----
   bool dirty = true;

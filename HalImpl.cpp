@@ -85,7 +85,7 @@ void HalImpl::tick()
 {
   m_display.tick();
 
-  if(m_blinkTimer.tick(this))
+  if(m_blinkTimer.tick(*this))
   {
     m_blinkState = !m_blinkState;
 
@@ -103,7 +103,7 @@ void HalImpl::tick()
     m_playerButtons[i].tick();
   }
 
-  if(m_soundTimer.tick(this))
+  if(m_soundTimer.tick(*this))
   {
     ledcDetach(BUZZER);
   }
@@ -183,7 +183,7 @@ void HalImpl::playerLedBlink(int player)
     if(!m_blinkTimer.isStarted())
     {
       m_blinkState = 1;
-      m_blinkTimer.start(this);
+      m_blinkTimer.start(*this);
     }
 
     return;
@@ -275,7 +275,7 @@ void HalImpl::sound(HalSound soundType)
 void HalImpl::sound(unsigned int frequency, unsigned int duration)
 {
   m_soundTimer.setTime(duration);
-  m_soundTimer.start(this);
+  m_soundTimer.start(*this);
   ledcAttach(BUZZER, 50, 10);
   ledcWriteTone(BUZZER, frequency);
 }
@@ -295,15 +295,13 @@ void HalImpl::updateDisplay(const GameDisplayInfo& info)
 
 void HalImpl::updateDisplay(const CustomDisplayInfo& info)
 {
-  
-}
-
-void HalImpl::updateDisplay(const SettingsDisplayInfo& info)
-{
-  DisplayState s;
-  s.mode = DisplayMode::Settings;
-  s.settings = info;
-  m_display.sync(s);
+  if(info.type == DisplayInfoSettings)
+  {
+    DisplayState s;
+    s.mode = DisplayMode::Settings;
+    s.settings = *((SettingsDisplayInfo*)info.data);
+    m_display.sync(s);
+  }
 }
 
 unsigned long HalImpl::getTimeMillis()
@@ -311,7 +309,7 @@ unsigned long HalImpl::getTimeMillis()
   return millis();
 }
 
-void HalImpl::saveSettings(const Settings& settings)
+void HalImpl::saveSettings(const settings::Settings& settings)
 {
   int data[settings.size()];
   settings.dumpData(data);
@@ -324,7 +322,7 @@ void HalImpl::saveSettings(const Settings& settings)
   EEPROM.commit();
 }
 
-void HalImpl::loadSettings(Settings& settings)
+void HalImpl::loadSettings(settings::Settings& settings)
 {
   int data[settings.size()];
 

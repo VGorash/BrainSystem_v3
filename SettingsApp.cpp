@@ -5,56 +5,62 @@
 #include "src/Framework/JeopardyGame.h"
 #include "src/Framework/BrainRingGame.h"
 
+#include "src/Settings/ListSettingsItem.h"
+
 using namespace vgs;
 
-struct GameInfo
+IApp* createGame(const GameConfig& config)
 {
-  const char* name;
-  App* (*constructor)(bool);
-};
-
-App* createGame(bool falstartEnabled)
-{
-  return new Game(falstartEnabled);
+  return new Game(config);
 }
 
-App* createJeopardyGame(bool falstartEnabled)
+IApp* createJeopardyGame(const GameConfig& config)
 {
-  return new JeopardyGame(falstartEnabled);
+  return new JeopardyGame(config);
 }
 
-App* createBrainRingGame(bool falstartEnabled)
+IApp* createBrainRingGame(const GameConfig& config, int primaryTime, int secondaryTime)
 {
-  return new BrainRingGame(falstartEnabled);
+  GameConfig newConfig = config;
+  newConfig.time.primary = primaryTime;
+  newConfig.time.secondary = secondaryTime;
+  return new BrainRingGame(newConfig);
 }
 
-constexpr int gameCount = 3;
-constexpr GameInfo games[gameCount] = {
-  {"Без отсчета", createGame},
-  {"Своя игра", createJeopardyGame},
-  {"Брейн-ринг", createBrainRingGame}
-};
+IApp* createBrainRingGame60(const GameConfig& config)
+{
+  return createBrainRingGame(config, 60, 20);
+}
+
+IApp* createBrainRingGame40(const GameConfig& config)
+{
+  return createBrainRingGame(config, 40, 20);
+}
+
+typedef IApp* (*GameConstructor)(const GameConfig&);
+
+constexpr int gameCount = 4;
+constexpr GameConstructor gameConstructors[gameCount] = {createGame, createJeopardyGame, createBrainRingGame60, createBrainRingGame40};
+
+constexpr const char* gameNames[gameCount] = {"БЕЗ ОТСЧЕТА", "СВОЯ ИГРА", "БРЕЙН-РИНГ 60+20", "БРЕЙН-РИНГ 40+20"};
+constexpr const char* modeNames[2] = {"БЕЗ ФАЛЬСТАРТОВ", "С ФАЛЬСТАРТАМИ"};
+constexpr const char* onOffNames[2] = {"ВКЛ", "ВЫКЛ"};
+constexpr const char* linkModes[2] = {"V1 (устаревший)", "V2 (обычный)"};
 
 SettingsApp::SettingsApp(bool launchGame) : m_launchGame(launchGame)
 {
-  const char* gameNames[gameCount];
-  for(int i=0; i<gameCount; i++)
-  {
-    gameNames[i] = games[i].name;
-  }
-  m_settings.addItem("Тип игры", gameCount, gameNames);
-
-  const char* modeNames[2] = {"Без фальстартов", "С фальстартами"};
-  m_settings.addItem("Режим", 2, modeNames);
-
-  const char* onOffNames[2] = {"Включен", "Выключен"};
-  m_settings.addItem("Звук", 2, onOffNames);
-  m_settings.addItem("Световой сигнал", 2, onOffNames);
+  m_settings.addItem(new settings::ListSettingsItem("Тип игры", gameCount, gameNames));  
+  m_settings.addItem(new settings::ListSettingsItem("Режим", 2, modeNames));
+  m_settings.addItem(new settings::ListSettingsItem("Звук", 2, onOffNames));
+  m_settings.addItem(new settings::ListSettingsItem("Свет", 2, onOffNames));
+  m_settings.addItem(new settings::ListSettingsItem("Link", 2, linkModes));
 }
 
-void SettingsApp::init(Hal* hal)
+void SettingsApp::init(IHal& hal)
 {
-  hal->loadSettings(m_settings);
+  HalImpl* halImpl = (HalImpl*) &hal;
+
+  halImpl->loadSettings(m_settings);
 
   if(m_launchGame)
   {
@@ -63,7 +69,7 @@ void SettingsApp::init(Hal* hal)
   }
 }
 
-void SettingsApp::tick(Hal* hal)
+void SettingsApp::tick(IHal& hal)
 {
   if(m_shouldClose)
   {
@@ -84,14 +90,19 @@ void SettingsApp::tick(Hal* hal)
     SettingsDisplayInfo info;
     info.settings = &m_settings;
     info.edit_mode = m_editMode;
-    hal->updateDisplay(info);
+
+    CustomDisplayInfo customInfo;
+    customInfo.type = DisplayInfoSettings;
+    customInfo.data = (void*)&info;
+
+    hal.updateDisplay(customInfo);
     m_displayDirty = false;
   }
 }
 
-void SettingsApp::processIdle(Hal* hal)
+void SettingsApp::processIdle(IHal& hal)
 {
-  ButtonState buttonState = hal->getButtonState();
+  ButtonState buttonState = hal.getButtonState();
 
   if(buttonState.menu)
   {
@@ -106,21 +117,21 @@ void SettingsApp::processIdle(Hal* hal)
   }
   if(buttonState.start)
   {
-    m_settings.next();
+    m_settings.moveNext();
     m_displayDirty = true;
     return;
   }
   if(buttonState.stop)
   {
-    m_settings.previous();
+    m_settings.movePrevious();
     m_displayDirty = true;
     return;
   }
 }
 
-void SettingsApp::processEdit(Hal* hal)
+void SettingsApp::processEdit(IHal& hal)
 {
-  ButtonState buttonState = hal->getButtonState();
+  ButtonState buttonState = hal.getButtonState();
 
   if(buttonState.menu)
   {
@@ -130,23 +141,23 @@ void SettingsApp::processEdit(Hal* hal)
   }
   if(buttonState.start)
   {
-    m_settings.getCurrentItem()->increment();
+    m_settings.getCurrentItem().increment();
     m_displayDirty = true;
     m_settingsDirty = true;
     return;
   }
   if(buttonState.stop)
   {
-    m_settings.getCurrentItem()->decrement();
+    m_settings.getCurrentItem().decrement();
     m_displayDirty = true;
     m_settingsDirty = true;
     return;
   }
 }
 
-void SettingsApp::exit(Hal* hal)
+void SettingsApp::exit(IHal& hal)
 {
-  HalImpl* halImpl = (HalImpl*) hal;
+  HalImpl* halImpl = (HalImpl*) &hal;
 
   if(m_settingsDirty)
   {
@@ -158,6 +169,7 @@ void SettingsApp::exit(Hal* hal)
   m_settings.dumpData(settingsState);
   int soundMode = settingsState[2];
   bool signalLightDisabled = settingsState[3];
+  int linkVersion = settingsState[4];
 
   halImpl->setSoundMode(static_cast<HalSoundMode>(soundMode));
   halImpl->setSignalLightEnabled(!signalLightDisabled);
@@ -177,14 +189,16 @@ AppChangeType SettingsApp::appChangeNeeded()
   return AppChangeType::None;
 }
 
-App* SettingsApp::getCustomApp()
+IApp* SettingsApp::createCustomApp()
 {
   int settingsState[m_settings.size()];
   m_settings.dumpData(settingsState);
 
   int gameNumber = settingsState[0];
-  bool falstartEnabled = (bool) settingsState[1];
-  int soundEnabled = settingsState[2];
+  
+  GameConfig config;
+  config.displayed_name = gameNames[gameNumber];
+  config.mode = static_cast<GameMode>(settingsState[1]);
 
-  return games[gameNumber].constructor(falstartEnabled);
+  return gameConstructors[gameNumber](config);
 }

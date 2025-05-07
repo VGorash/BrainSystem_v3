@@ -17,13 +17,18 @@ enum class HalSoundMode
   Disabled
 };
 
-class HalImpl : public vgs::Hal
+enum CustomDisplayInfoType
+{
+  DisplayInfoSettings = 0
+};
+
+class HalImpl : public vgs::IHal
 {
 public:
   HalImpl();
   ~HalImpl();
 
-  void init();
+  void init() override;
   void tick() override;
 
   //buttons
@@ -43,15 +48,14 @@ public:
 
   //display
   void updateDisplay(const vgs::GameDisplayInfo& info) override;
-  void updateDisplay(const vgs::SettingsDisplayInfo& info) override;
   void updateDisplay(const vgs::CustomDisplayInfo& info) override;
 
   //time
   unsigned long getTimeMillis() override;
 
   //settings
-  void saveSettings(const vgs::Settings& settings) override;
-  void loadSettings(vgs::Settings& settings) override;
+  void saveSettings(const vgs::settings::Settings& settings);
+  void loadSettings(vgs::settings::Settings& settings);
 
 private:
   void sendLinkCommand(int linkNumber, bool useLink, vgs::link::Command command, unsigned int data = 0);

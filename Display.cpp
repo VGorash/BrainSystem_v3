@@ -135,7 +135,7 @@ void startStopButtonUpdate(const DisplayState& state, Element* eRaw)
     e->setHidden(true);
     return;
   }
-  if(state.game.name == "БРЕЙН-РИНГ" && state.game.state == GameState::Press)
+  if(String(state.game.name).indexOf("БРЕЙН-РИНГ") >= 0 && state.game.state == GameState::Press)
   {
     e->setHidden(true);
     return;
@@ -185,7 +185,7 @@ void brainStartStopButtonUpdate(const DisplayState& state, Element* eRaw)
     e->setHidden(true);
     return;
   }
-  if(state.game.name != "БРЕЙН-РИНГ" || state.game.state != GameState::Press)
+  if(String(state.game.name).indexOf("БРЕЙН-РИНГ") < 0 || state.game.state != GameState::Press)
   {
     e->setHidden(true);
     return;
@@ -305,7 +305,7 @@ void titlePanelUpdate(const DisplayState& state, Element* eRaw)
   {
     if(state.settings.edit_mode)
     {
-      String settingName = String(state.settings.settings->getCurrentItem()->getName());
+      String settingName = String(state.settings.settings->getCurrentItem().getName());
       settingName.toUpperCase();
       e->setText(settingName);
     }
@@ -373,7 +373,8 @@ void modePanelUpdate(const DisplayState& state, Element* eRaw)
   }
   e->setHidden(false);
 
-  e->setText(state.game.falstart_enabled ? "Ф/С" : "Б/Ф");
+  constexpr const char* modeNames[2] = {"Б/Ф", "Ф/С"};
+  e->setText(modeNames[static_cast<int>(state.game.mode)]);
 }
 
 TextElement* setupModePanel(TextElement* e)
@@ -410,11 +411,11 @@ void settingsPanelUpdate(const DisplayState& state, Element* eRaw)
 
   if(state.settings.edit_mode)
   {
-    e->setText(state.settings.settings->getCurrentItem()->getValue());
+    e->setText(state.settings.settings->getCurrentItem().getValueStr());
   }
   else
   {
-    e->setText(state.settings.settings->getCurrentItem()->getName());
+    e->setText(state.settings.settings->getCurrentItem().getName());
   }
 }
 
@@ -483,7 +484,7 @@ void settingsDetailsPanelUpdate(const DisplayState& state, Element* eRaw)
   }
   else
   {
-    e->setText(state.settings.settings->getCurrentItem()->getValue());
+    e->setText(state.settings.settings->getCurrentItem().getValueStr());
   }
 }
 
@@ -513,7 +514,7 @@ void Display::initElements()
   BitmapElement* setingsIncrementButton = setupSettingsIncrementButton(createBitmapElement({240, 240, 240, 80}));
 
   // TOP PANEL
-  TextElement* titlePanel = setupTitlePanel(createTextElement({120, 0, 240, 40}));
+  TextElement* titlePanel = setupTitlePanel(createTextElement({80, 0, 320, 40}));
   TextElement* modePanel = setupModePanel(createTextElement({400, 0, 80, 40}));
   BitmapElement* setingsIcon = setupSettingsIcon(createBitmapElement({5, 5, 30, 30}));
 }

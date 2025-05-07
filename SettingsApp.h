@@ -2,28 +2,28 @@
 #define SETTINGS_APP_H
 
 #include "src/Framework/Core/App.h"
-#include "src/Framework/Core/Settings.h"
+#include "src/Settings/Settings.h"
 
 namespace vgs
 {
 
-class SettingsApp : public App
+class SettingsApp : public IApp
 {
 public:
   SettingsApp(bool launchGame);
 
-  void init(Hal* hal) override;
-  void tick(Hal* hal) override;
+  void init(IHal& hal) override;
+  void tick(IHal& hal) override;
 
   AppChangeType appChangeNeeded() override;
-  App* getCustomApp() override;
+  IApp* createCustomApp() override;
 
 private:
 
-  void processIdle(Hal* hal);
-  void processEdit(Hal* hal);
+  void processIdle(IHal& hal);
+  void processEdit(IHal& hal);
 
-  void exit(Hal* hal);
+  void exit(IHal& hal);
 
 private:
   bool m_launchGame;
@@ -33,7 +33,7 @@ private:
   bool m_shouldClose = false;
   bool m_editMode = false;
 
-  Settings m_settings;
+  settings::Settings m_settings;
 
 };
 
