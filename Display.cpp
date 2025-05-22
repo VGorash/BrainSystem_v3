@@ -292,6 +292,14 @@ TextElement* setupMainPanel(TextElement* e)
   return e;
 }
 
+void titlePanelOnClick(DisplayState& state, Element* e)
+{
+  if(String(state.game.name) == "ЧГК")
+  {
+    state.button_state.enter = true;
+  } 
+}
+
 void titlePanelUpdate(const DisplayState& state, Element* eRaw)
 {
   TextElement* e = (TextElement*) eRaw;
@@ -299,7 +307,21 @@ void titlePanelUpdate(const DisplayState& state, Element* eRaw)
 
   if(state.mode == DisplayMode::Game)
   {
-    e->setText(state.game.name);
+    String title = state.game.name;
+
+    if(title == "ЧГК")
+    {
+      if(state.game.customInt == 1)
+      {
+        title = title + " (ОБЫЧНЫЙ)";
+      }
+      else
+      {
+        title = title + " (БЛИЦ " + String(state.game.customInt) + ")";
+      }
+    }
+
+    e->setText(title);
   }
   if(state.mode == DisplayMode::Settings)
   {
@@ -322,6 +344,7 @@ TextElement* setupTitlePanel(TextElement* e)
   e->setBackgroundColor(COMMON_BACKGROUND_COLOR);
   e->setFontSize(30);
   e->setUpdateCallback(titlePanelUpdate);
+  e->setOnClickCallback(titlePanelOnClick);
   return e;
 }
 
@@ -366,7 +389,7 @@ BitmapElement* setupSettingsIcon(BitmapElement* e)
 void modePanelUpdate(const DisplayState& state, Element* eRaw)
 {
   TextElement* e = (TextElement*) eRaw;
-  if(state.mode != DisplayMode::Game)
+  if(state.mode != DisplayMode::Game || String(state.game.name) == "ЧГК")
   {
     e->setHidden(true);
     return;

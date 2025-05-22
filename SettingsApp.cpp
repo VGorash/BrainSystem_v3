@@ -4,6 +4,7 @@
 #include "src/Framework/Game.h"
 #include "src/Framework/JeopardyGame.h"
 #include "src/Framework/BrainRingGame.h"
+#include "src/Framework/QuestionsGame.h"
 
 #include "src/Settings/ListSettingsItem.h"
 
@@ -37,12 +38,17 @@ IApp* createBrainRingGame40(const GameConfig& config)
   return createBrainRingGame(config, 40, 20);
 }
 
+IApp* createQuestionsGame(const GameConfig& config)
+{
+  return new QuestionsGame(config);
+}
+
 typedef IApp* (*GameConstructor)(const GameConfig&);
 
-constexpr int gameCount = 4;
-constexpr GameConstructor gameConstructors[gameCount] = {createGame, createJeopardyGame, createBrainRingGame60, createBrainRingGame40};
+constexpr int gameCount = 5;
+constexpr GameConstructor gameConstructors[gameCount] = {createGame, createJeopardyGame, createBrainRingGame60, createBrainRingGame40, createQuestionsGame};
 
-constexpr const char* gameNames[gameCount] = {"БЕЗ ОТСЧЕТА", "СВОЯ ИГРА", "БРЕЙН-РИНГ 60+20", "БРЕЙН-РИНГ 40+20"};
+constexpr const char* gameNames[gameCount] = {"БЕЗ ОТСЧЕТА", "СВОЯ ИГРА", "БРЕЙН-РИНГ 60+20", "БРЕЙН-РИНГ 40+20", "ЧГК"};
 constexpr const char* modeNames[2] = {"БЕЗ ФАЛЬСТАРТОВ", "С ФАЛЬСТАРТАМИ"};
 constexpr const char* onOffNames[2] = {"ВКЛ", "ВЫКЛ"};
 constexpr const char* linkModes[2] = {"V1 (устаревший)", "V2 (обычный)"};
