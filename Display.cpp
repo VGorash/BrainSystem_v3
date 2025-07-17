@@ -396,7 +396,7 @@ void modePanelUpdate(const DisplayState& state, Element* eRaw)
   }
   e->setHidden(false);
 
-  constexpr const char* modeNames[2] = {"Б/Ф", "Ф/С"};
+  constexpr const char* modeNames[3] = {"Б/Ф", "Ф/С", "ХС"};
   e->setText(modeNames[static_cast<int>(state.game.mode)]);
 }
 

@@ -334,6 +334,18 @@ void HalImpl::loadSettings(settings::Settings& settings)
   settings.loadData(data);
 }
 
+void HalImpl::setLinkVersion(vgs::link::UartLinkVersion version)
+{
+  for (int i=0; i<NUM_UART_LINKS; i++)
+  {
+    delete m_uartLinks[i];
+  }
+
+  m_uartLinks[0] = new link::ArduinoUartLink(&Serial, version);
+  m_uartLinks[1] = new link::ArduinoUartLink(&Serial1, version);
+  m_uartLinks[2] = new link::ArduinoUartLink(&Serial2, version);
+}
+
 void HalImpl::sendLinkCommand(int linkNumber, bool useLink, vgs::link::Command command, unsigned int data)
 {
   if(!useLink || linkNumber >= NUM_UART_LINKS)

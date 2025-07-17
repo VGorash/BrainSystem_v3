@@ -49,14 +49,14 @@ constexpr int gameCount = 5;
 constexpr GameConstructor gameConstructors[gameCount] = {createGame, createJeopardyGame, createBrainRingGame60, createBrainRingGame40, createQuestionsGame};
 
 constexpr const char* gameNames[gameCount] = {"БЕЗ ОТСЧЕТА", "СВОЯ ИГРА", "БРЕЙН-РИНГ 60+20", "БРЕЙН-РИНГ 40+20", "ЧГК"};
-constexpr const char* modeNames[2] = {"БЕЗ ФАЛЬСТАРТОВ", "С ФАЛЬСТАРТАМИ"};
+constexpr const char* modeNames[3] = {"БЕЗ ФАЛЬСТАРТОВ", "С ФАЛЬСТАРТАМИ", "ХАМСА"};
 constexpr const char* onOffNames[2] = {"ВКЛ", "ВЫКЛ"};
 constexpr const char* linkModes[2] = {"V1 (устаревший)", "V2 (обычный)"};
 
 SettingsApp::SettingsApp(bool launchGame) : m_launchGame(launchGame)
 {
   m_settings.addItem(new settings::ListSettingsItem("Тип игры", gameCount, gameNames));  
-  m_settings.addItem(new settings::ListSettingsItem("Режим", 2, modeNames));
+  m_settings.addItem(new settings::ListSettingsItem("Режим", 3, modeNames));
   m_settings.addItem(new settings::ListSettingsItem("Звук", 2, onOffNames));
   m_settings.addItem(new settings::ListSettingsItem("Свет", 2, onOffNames));
   m_settings.addItem(new settings::ListSettingsItem("Link", 2, linkModes));
@@ -179,6 +179,7 @@ void SettingsApp::exit(IHal& hal)
 
   halImpl->setSoundMode(static_cast<HalSoundMode>(soundMode));
   halImpl->setSignalLightEnabled(!signalLightDisabled);
+  halImpl->setLinkVersion(static_cast<vgs::link::UartLinkVersion>(linkVersion));
 
   m_shouldClose = true;
 }

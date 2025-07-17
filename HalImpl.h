@@ -57,6 +57,9 @@ public:
   void saveSettings(const vgs::settings::Settings& settings);
   void loadSettings(vgs::settings::Settings& settings);
 
+  // link
+  void setLinkVersion(vgs::link::UartLinkVersion);
+
 private:
   void sendLinkCommand(int linkNumber, bool useLink, vgs::link::Command command, unsigned int data = 0);
 
