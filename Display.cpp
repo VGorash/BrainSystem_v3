@@ -10,6 +10,9 @@ using namespace vgs;
 
 constexpr int playerColors[NUM_PLAYERS] = {TFT_YELLOW, TFT_BLUE, TFT_GREEN, TFT_RED};
 
+volatile bool touchAvailable = false;
+void IRAM_ATTR touchISR() { touchAvailable = true;}
+
 Display::Display()
 {
   m_numElements = 0;
@@ -27,12 +30,11 @@ Display::~Display()
 
 void Display::init()
 {
-  m_buttonEmulator.setDebTimeout(50);
-  m_touchscreenSpi.begin(XPT2046_CLK, XPT2046_MISO, XPT2046_MOSI, XPT2046_CS);
-  m_touchscreen.begin(m_touchscreenSpi);
-  m_touchscreen.setRotation(1);
+  m_buttonEmulator.setDebTimeout(0);
+  m_touchscreen.begin();
+  attachInterrupt(digitalPinToInterrupt(INT_N_PIN), touchISR, FALLING);
   m_tft.init();
-  m_tft.setRotation(1);
+  m_tft.setRotation(3);
   m_fontRender.loadFont(binaryttf, sizeof(binaryttf));
   m_fontRender.setDrawer(m_tft);
   m_fontRender.setBackgroundFillMethod(BgFillMethod::None);
@@ -55,14 +57,18 @@ BitmapElement* Display::createBitmapElement(coordinates_t coordinates)
 
 void Display::tick()
 {
-  bool touched = m_touchscreen.tirqTouched() && m_touchscreen.touched();
-  if(touched)
+  int touchscreenState = digitalRead(INT_N_PIN);
+
+  if(touchAvailable)
   {
-    TS_Point p = m_touchscreen.getPoint();
-    m_touchX = SCREEN_WIDTH - map(p.x, 600, 4000, 1, SCREEN_WIDTH);
-    m_touchY = SCREEN_HEIGHT - map(p.y, 240, 3800, 1, SCREEN_HEIGHT);
+    touchAvailable = false;
+    m_touched = (m_touchscreen.read_td_status() > 0);
+    // swap x and y axis because it's different for display and touchscreen
+    m_touchX = SCREEN_WIDTH - m_touchscreen.read_touch1_y();
+    m_touchY = m_touchscreen.read_touch1_x();
   }
-  m_buttonEmulator.tick(touched);
+
+  m_buttonEmulator.tick(m_touched);
 
   if(m_state.dirty)
   {
