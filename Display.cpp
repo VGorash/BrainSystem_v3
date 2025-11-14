@@ -298,6 +298,54 @@ TextElement* setupMainPanel(TextElement* e)
   return e;
 }
 
+void pressTimePanelUpdate(const DisplayState& state, Element* eRaw)
+{
+  TextElement* e = (TextElement*) eRaw;
+
+  if(state.mode != DisplayMode::Game)
+  {
+    e->setHidden(true);
+    return;
+  }
+
+  e->setHidden(false);
+
+  if(state.game.mode != GameMode::Falstart || state.game.pressTime < 0)
+  {
+    e->setText("");
+    return;
+  }
+
+  int t = state.game.pressTime;
+
+  char c[6];
+  sprintf(c, "%d", t / 1000);
+
+  String text = String(c) + String(",");
+
+  if (t > 1000)
+  {
+    sprintf(c, "%d", (t % 1000) / 100);
+  }
+  else
+  {
+    sprintf(c, "%02d", (t % 1000) / 10);
+  }
+
+  text = text + String(c);
+
+  e->setText(text);
+}
+
+TextElement* setupPressTimePanel(TextElement* e)
+{
+  e->setTextColor(TFT_WHITE);
+  e->setBackgroundColor(COMMON_BACKGROUND_COLOR);
+  e->setFontSize(30);
+  e->setUpdateCallback(pressTimePanelUpdate);
+  return e;
+}
+
 void titlePanelOnClick(DisplayState& state, Element* e)
 {
   if(String(state.game.name) == "ЧГК")
@@ -535,6 +583,7 @@ void Display::initElements()
   TextElement* brainStopButton = setupBrainStopButton(createTextElement({0, 200, 240, 120}));
   TextElement* brainStartButton = setupBrainStartButton(createTextElement({240, 200, 240, 120}));
   TextElement* mainPanel = setupMainPanel(createTextElement({0, 70, 480, 110}));
+  TextElement* pressTimePanel = setupPressTimePanel(createTextElement({0, 45, 480, 35}));
 
   // SETTINGS WINDOW
   TextElement* settingsPanel = setupSettingsPanel(createTextElement({40, 100, 400, 60}));
