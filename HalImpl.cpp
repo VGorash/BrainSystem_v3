@@ -132,7 +132,7 @@ ButtonState HalImpl::getButtonState()
   {
     for (int i=0; i<NUM_UART_LINKS; i++)
     {
-      if(m_uartLinks[i]->getCommand() == link::Command::PlayerButton)
+      if(m_uartLinks[i]->getCommand() == link::Command::ButtonPressed)
       {
         s.player = m_uartLinks[i]->getData() + NUM_PLAYERS + UART_LINK_MAX_PLAYERS * i;
         break;
@@ -143,7 +143,7 @@ ButtonState HalImpl::getButtonState()
   return s;
 }
 
-void HalImpl::playerLedOn(int player)
+void HalImpl::correctPressSignal(int player)
 {
   if (player < 0)
   {
@@ -160,16 +160,16 @@ void HalImpl::playerLedOn(int player)
 
   if(player < UART_LINK_MAX_PLAYERS * NUM_UART_LINKS)
   {
-    sendLinkCommand(player / UART_LINK_MAX_PLAYERS, true, link::Command::PlayerLedOn, player % UART_LINK_MAX_PLAYERS);
+    sendLinkCommand(player / UART_LINK_MAX_PLAYERS, true, link::Command::CorrectPressSignal, player % UART_LINK_MAX_PLAYERS);
   }
 
   for (int i=0; i<NUM_UART_LINKS; i++)
   {
-    sendLinkCommand(i, true, link::Command::DisplayPlayerLedOn, player % UART_LINK_MAX_PLAYERS);
+    sendLinkCommand(i, true, link::Command::DisplayCorrectPressSignal, player % UART_LINK_MAX_PLAYERS);
   }
 }
 
-void HalImpl::playerLedBlink(int player)
+void HalImpl::falstartPressSignal(int player)
 {
   if (player < 0)
   {
@@ -177,15 +177,7 @@ void HalImpl::playerLedBlink(int player)
   }
   if(player < NUM_PLAYERS)
   {
-    playerLedOn(player);
-    m_blinkingLeds[player] = true;
-
-    if(!m_blinkTimer.isStarted())
-    {
-      m_blinkState = 1;
-      m_blinkTimer.start(*this);
-    }
-
+    blinkLed(player);
     return;
   }
 
@@ -193,16 +185,36 @@ void HalImpl::playerLedBlink(int player)
 
   if(player < UART_LINK_MAX_PLAYERS * NUM_UART_LINKS)
   {
-    sendLinkCommand(player / UART_LINK_MAX_PLAYERS, true, link::Command::PlayerLedBlink, player % UART_LINK_MAX_PLAYERS);
+    sendLinkCommand(player / UART_LINK_MAX_PLAYERS, true, link::Command::FalstartPressSignal, player % UART_LINK_MAX_PLAYERS);
   }
 
   for (int i=0; i<NUM_UART_LINKS; i++)
   {
-    sendLinkCommand(i, true, link::Command::DisplayPlayerLedBlink, player % UART_LINK_MAX_PLAYERS);
+    sendLinkCommand(i, true, link::Command::DisplayFalstartPressSignal, player % UART_LINK_MAX_PLAYERS);
   }
 }
 
-void HalImpl::signalLedOn()
+void HalImpl::pendingPressSignal(int player)
+{
+  if (player < 0)
+  {
+    return;
+  }
+  if(player < NUM_PLAYERS)
+  {
+    blinkLed(player);
+    return;
+  }
+
+  player -= NUM_PLAYERS;
+
+  if(player < UART_LINK_MAX_PLAYERS * NUM_UART_LINKS)
+  {
+    sendLinkCommand(player / UART_LINK_MAX_PLAYERS, true, link::Command::PendingPressSignal, player % UART_LINK_MAX_PLAYERS);
+  }
+}
+
+void HalImpl::gameStartSignal()
 {
   if(m_signalLightEnabled)
   {
@@ -211,11 +223,11 @@ void HalImpl::signalLedOn()
 
   for (int i=0; i<NUM_UART_LINKS; i++)
   {
-    sendLinkCommand(i, true, link::Command::SignalLedOn);
+    sendLinkCommand(i, true, link::Command::GameStartSignal);
   }
 }
 
-void HalImpl::ledsOff()
+void HalImpl::clearSignals()
 {
   digitalWrite(LED_SIGNAL, 0);
 
@@ -229,13 +241,25 @@ void HalImpl::ledsOff()
 
   for (int i=0; i<NUM_UART_LINKS; i++)
   {
-    sendLinkCommand(i, true, link::Command::LedsOff);
+    sendLinkCommand(i, true, link::Command::Clear);
   }
 }
 
 void HalImpl::setSignalLightEnabled(bool enabled)
 {
   m_signalLightEnabled = enabled;
+}
+
+void HalImpl::blinkLed(int player)
+{
+  digitalWrite(playerLedPins[player], 1);
+  m_blinkingLeds[player] = true;
+
+  if(!m_blinkTimer.isStarted())
+  {
+    m_blinkState = 1;
+    m_blinkTimer.start(*this);
+  }
 }
 
 void HalImpl::sound(HalSound soundType)

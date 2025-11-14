@@ -35,10 +35,11 @@ public:
   vgs::ButtonState getButtonState() override;
 
   //leds
-  void playerLedOn(int player) override;
-  void playerLedBlink(int player) override;
-  void signalLedOn() override;
-  void ledsOff() override;
+  void correctPressSignal(int player) override;
+  void falstartPressSignal(int player) override;
+  void pendingPressSignal(int player) override;
+  void gameStartSignal() override;
+  void clearSignals() override;
   void setSignalLightEnabled(bool enabled);
 
   //sound
@@ -62,6 +63,7 @@ public:
 
 private:
   void sendLinkCommand(int linkNumber, bool useLink, vgs::link::Command command, unsigned int data = 0);
+  void blinkLed(int player);
 
 private:  
   Display m_display;
