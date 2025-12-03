@@ -41,14 +41,10 @@ static const int playerLedPins[NUM_PLAYERS] = {LED_PLAYER_1, LED_PLAYER_2, LED_P
 
 HalImpl::HalImpl()
 {
-  m_blinkTimer.setTime(500);
-  m_blinkTimer.setPeriodMode(true);
-
-  m_soundTimer.setPeriodMode(false);
-  
-  m_uartLinks[0] = new link::ArduinoUartLink(&Serial);
-  m_uartLinks[1] = new link::ArduinoUartLink(&Serial1);
-  m_uartLinks[2] = new link::ArduinoUartLink(&Serial2);
+  for (int i=0; i<NUM_UART_LINKS; i++)
+  {
+    m_uartLinks[i] = nullptr;
+  }
 }
 
 HalImpl::~HalImpl()
@@ -79,6 +75,14 @@ void HalImpl::init()
   Serial.begin(9600, SERIAL_8N1);
   Serial1.begin(9600, SERIAL_8N1, UART1_RX, UART1_TX);
   Serial2.begin(9600, SERIAL_8N1, UART2_RX, UART2_TX);
+
+  m_uartLinks[0] = new link::ArduinoUartLink(&Serial);
+  m_uartLinks[1] = new link::ArduinoUartLink(&Serial1);
+  m_uartLinks[2] = new link::ArduinoUartLink(&Serial2);
+
+  m_blinkTimer.setTime(500);
+  m_blinkTimer.setPeriodMode(true);
+  m_soundTimer.setPeriodMode(false);
 }
 
 void HalImpl::tick()
