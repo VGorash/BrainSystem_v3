@@ -8,8 +8,9 @@
 #include "src/Link/ArduinoUartLink.h"
 
 #include "Display.h"
+#include "WirelessLink.h"
 
-#define NUM_UART_LINKS 3
+#define NUM_LINKS 4
 
 enum class HalSoundMode
 {
@@ -59,7 +60,7 @@ public:
   void loadSettings(vgs::settings::Settings& settings);
 
   // link
-  void setLinkVersion(vgs::link::UartLinkVersion);
+  void setUartLinkVersion(vgs::link::UartLinkVersion);
 
 private:
   void sendLinkCommand(int linkNumber, bool useLink, vgs::link::Command command, unsigned int data = 0);
@@ -78,7 +79,7 @@ private:
   HalSoundMode m_soundMode;
   bool m_signalLightEnabled;
 
-  vgs::link::UartLink* m_uartLinks[NUM_UART_LINKS];
+  vgs::link::Link* m_links[NUM_LINKS];
 };
 
 #endif

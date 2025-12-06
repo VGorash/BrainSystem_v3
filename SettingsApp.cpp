@@ -179,7 +179,7 @@ void SettingsApp::exit(IHal& hal)
 
   halImpl->setSoundMode(static_cast<HalSoundMode>(soundMode));
   halImpl->setSignalLightEnabled(!signalLightDisabled);
-  halImpl->setLinkVersion(static_cast<vgs::link::UartLinkVersion>(linkVersion));
+  halImpl->setUartLinkVersion(static_cast<vgs::link::UartLinkVersion>(linkVersion));
 
   m_shouldClose = true;
 }

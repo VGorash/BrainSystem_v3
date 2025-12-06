@@ -41,17 +41,17 @@ static const int playerLedPins[NUM_PLAYERS] = {LED_PLAYER_1, LED_PLAYER_2, LED_P
 
 HalImpl::HalImpl()
 {
-  for (int i=0; i<NUM_UART_LINKS; i++)
+  for (int i=0; i<NUM_LINKS; i++)
   {
-    m_uartLinks[i] = nullptr;
+    m_links[i] = nullptr;
   }
 }
 
 HalImpl::~HalImpl()
 {
-  for (int i=0; i<NUM_UART_LINKS; i++)
+  for (int i=0; i<NUM_LINKS; i++)
   {
-    delete m_uartLinks[i];
+    delete m_links[i];
   }
 }
 
@@ -76,9 +76,13 @@ void HalImpl::init()
   Serial1.begin(9600, SERIAL_8N1, UART1_RX, UART1_TX);
   Serial2.begin(9600, SERIAL_8N1, UART2_RX, UART2_TX);
 
-  m_uartLinks[0] = new link::ArduinoUartLink(&Serial);
-  m_uartLinks[1] = new link::ArduinoUartLink(&Serial1);
-  m_uartLinks[2] = new link::ArduinoUartLink(&Serial2);
+  WirelessLink* wirelessLink = new WirelessLink();
+  wirelessLink->init();
+
+  m_links[0] = new link::ArduinoUartLink(&Serial);
+  m_links[1] = new link::ArduinoUartLink(&Serial1);
+  m_links[2] = new link::ArduinoUartLink(&Serial2);
+  m_links[3] = wirelessLink;
 
   m_blinkTimer.setTime(500);
   m_blinkTimer.setPeriodMode(true);
@@ -112,9 +116,9 @@ void HalImpl::tick()
     ledcDetach(BUZZER);
   }
 
-  for (int i=0; i<NUM_UART_LINKS; i++)
+  for (int i=0; i<NUM_LINKS; i++)
   {
-    m_uartLinks[i]->tick();
+    m_links[i]->tick();
   }
 }
 
@@ -134,11 +138,11 @@ ButtonState HalImpl::getButtonState()
 
   if(s.player < 0)
   {
-    for (int i=0; i<NUM_UART_LINKS; i++)
+    for (int i=0; i<NUM_LINKS; i++)
     {
-      if(m_uartLinks[i]->getCommand() == link::Command::ButtonPressed)
+      if(m_links[i]->getCommand() == link::Command::ButtonPressed)
       {
-        s.player = m_uartLinks[i]->getData() + NUM_PLAYERS + UART_LINK_MAX_PLAYERS * i;
+        s.player = m_links[i]->getData() + NUM_PLAYERS + link::Link::maxPlayers * i;
         break;
       }
     }
@@ -162,14 +166,14 @@ void HalImpl::correctPressSignal(int player)
 
   player -= NUM_PLAYERS;
 
-  if(player < UART_LINK_MAX_PLAYERS * NUM_UART_LINKS)
+  if(player < link::Link::maxPlayers * NUM_LINKS)
   {
-    sendLinkCommand(player / UART_LINK_MAX_PLAYERS, true, link::Command::CorrectPressSignal, player % UART_LINK_MAX_PLAYERS);
+    sendLinkCommand(player / link::Link::maxPlayers, true, link::Command::CorrectPressSignal, player % link::Link::maxPlayers);
   }
 
-  for (int i=0; i<NUM_UART_LINKS; i++)
+  for (int i=0; i<NUM_LINKS; i++)
   {
-    sendLinkCommand(i, true, link::Command::DisplayCorrectPressSignal, player % UART_LINK_MAX_PLAYERS);
+    sendLinkCommand(i, true, link::Command::DisplayCorrectPressSignal, player % link::Link::maxPlayers);
   }
 }
 
@@ -187,14 +191,14 @@ void HalImpl::falstartPressSignal(int player)
 
   player -= NUM_PLAYERS;
 
-  if(player < UART_LINK_MAX_PLAYERS * NUM_UART_LINKS)
+  if(player < link::Link::maxPlayers * NUM_LINKS)
   {
-    sendLinkCommand(player / UART_LINK_MAX_PLAYERS, true, link::Command::FalstartPressSignal, player % UART_LINK_MAX_PLAYERS);
+    sendLinkCommand(player / link::Link::maxPlayers, true, link::Command::FalstartPressSignal, player % link::Link::maxPlayers);
   }
 
-  for (int i=0; i<NUM_UART_LINKS; i++)
+  for (int i=0; i<NUM_LINKS; i++)
   {
-    sendLinkCommand(i, true, link::Command::DisplayFalstartPressSignal, player % UART_LINK_MAX_PLAYERS);
+    sendLinkCommand(i, true, link::Command::DisplayFalstartPressSignal, player % link::Link::maxPlayers);
   }
 }
 
@@ -212,9 +216,9 @@ void HalImpl::pendingPressSignal(int player)
 
   player -= NUM_PLAYERS;
 
-  if(player < UART_LINK_MAX_PLAYERS * NUM_UART_LINKS)
+  if(player < link::Link::maxPlayers * NUM_LINKS)
   {
-    sendLinkCommand(player / UART_LINK_MAX_PLAYERS, true, link::Command::PendingPressSignal, player % UART_LINK_MAX_PLAYERS);
+    sendLinkCommand(player / link::Link::maxPlayers, true, link::Command::PendingPressSignal, player % link::Link::maxPlayers);
   }
 }
 
@@ -225,7 +229,7 @@ void HalImpl::gameStartSignal()
     digitalWrite(LED_SIGNAL, 1);
   }
 
-  for (int i=0; i<NUM_UART_LINKS; i++)
+  for (int i=0; i<NUM_LINKS; i++)
   {
     sendLinkCommand(i, true, link::Command::GameStartSignal);
   }
@@ -243,7 +247,7 @@ void HalImpl::clearSignals()
 
   m_blinkTimer.stop();
 
-  for (int i=0; i<NUM_UART_LINKS; i++)
+  for (int i=0; i<NUM_LINKS; i++)
   {
     sendLinkCommand(i, true, link::Command::Clear);
   }
@@ -362,24 +366,22 @@ void HalImpl::loadSettings(settings::Settings& settings)
   settings.loadData(data);
 }
 
-void HalImpl::setLinkVersion(vgs::link::UartLinkVersion version)
+void HalImpl::setUartLinkVersion(vgs::link::UartLinkVersion version)
 {
-  for (int i=0; i<NUM_UART_LINKS; i++)
-  {
-    delete m_uartLinks[i];
-  }
-
-  m_uartLinks[0] = new link::ArduinoUartLink(&Serial, version);
-  m_uartLinks[1] = new link::ArduinoUartLink(&Serial1, version);
-  m_uartLinks[2] = new link::ArduinoUartLink(&Serial2, version);
+  delete m_links[0];
+  m_links[0] = new link::ArduinoUartLink(&Serial, version);
+  delete m_links[1];
+  m_links[1] = new link::ArduinoUartLink(&Serial1, version);
+  delete m_links[2];
+  m_links[2] = new link::ArduinoUartLink(&Serial2, version);
 }
 
 void HalImpl::sendLinkCommand(int linkNumber, bool useLink, vgs::link::Command command, unsigned int data)
 {
-  if(!useLink || linkNumber >= NUM_UART_LINKS)
+  if(!useLink || linkNumber >= NUM_LINKS)
   {
     return;
   }
 
-  m_uartLinks[linkNumber]->send(command, data);
+  m_links[linkNumber]->send(command, data);
 }
