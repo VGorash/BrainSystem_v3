@@ -19,9 +19,11 @@ public:
   IApp* createCustomApp() override;
 
 private:
-
   void processIdle(IHal& hal);
   void processEdit(IHal& hal);
+
+  void loadSettings(IHal& hal);
+  void saveSettings(IHal& hal);
 
   void exit(IHal& hal);
 

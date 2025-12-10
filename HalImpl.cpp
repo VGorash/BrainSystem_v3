@@ -1,7 +1,5 @@
 #include "HalImpl.h"
 
-#include <EEPROM.h>
-
 #define BUTTON_PLAYER_4 34
 #define BUTTON_PLAYER_3 35
 #define BUTTON_PLAYER_2 5
@@ -57,8 +55,6 @@ HalImpl::~HalImpl()
 
 void HalImpl::init()
 {
-  EEPROM.begin(512);
-
   m_display.init();
 
   for(int i=0; i<NUM_PLAYERS; i++)
@@ -341,31 +337,6 @@ unsigned long HalImpl::getTimeMillis()
   return millis();
 }
 
-void HalImpl::saveSettings(const settings::Settings& settings)
-{
-  int data[settings.size()];
-  settings.dumpData(data);
-
-  for(int i=0; i<settings.size(); i++)
-  {
-    EEPROM.put(i * sizeof(int), data[i]);
-  }
-
-  EEPROM.commit();
-}
-
-void HalImpl::loadSettings(settings::Settings& settings)
-{
-  int data[settings.size()];
-
-  for(int i=0; i<settings.size(); i++)
-  {
-    EEPROM.get(i * sizeof(int), data[i]);
-  }
-
-  settings.loadData(data);
-}
-
 void HalImpl::setUartLinkVersion(vgs::link::UartLinkVersion version)
 {
   delete m_links[0];
@@ -374,6 +345,11 @@ void HalImpl::setUartLinkVersion(vgs::link::UartLinkVersion version)
   m_links[1] = new link::ArduinoUartLink(&Serial1, version);
   delete m_links[2];
   m_links[2] = new link::ArduinoUartLink(&Serial2, version);
+}
+
+Preferences& HalImpl::getPreferences()
+{
+  return m_preferences;
 }
 
 void HalImpl::sendLinkCommand(int linkNumber, bool useLink, vgs::link::Command command, unsigned int data)

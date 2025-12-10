@@ -64,9 +64,7 @@ SettingsApp::SettingsApp(bool launchGame) : m_launchGame(launchGame)
 
 void SettingsApp::init(IHal& hal)
 {
-  HalImpl* halImpl = (HalImpl*) &hal;
-
-  halImpl->loadSettings(m_settings);
+  loadSettings(hal);
 
   if(m_launchGame)
   {
@@ -167,7 +165,7 @@ void SettingsApp::exit(IHal& hal)
 
   if(m_settingsDirty)
   {
-    halImpl->saveSettings(m_settings);
+    saveSettings(hal);
     m_settingsDirty = false;
   }
 
@@ -182,6 +180,40 @@ void SettingsApp::exit(IHal& hal)
   halImpl->setUartLinkVersion(static_cast<vgs::link::UartLinkVersion>(linkVersion));
 
   m_shouldClose = true;
+}
+
+void SettingsApp::loadSettings(IHal& hal)
+{
+  HalImpl* halImpl = (HalImpl*) &hal;
+
+  Preferences& preferences = halImpl->getPreferences();
+  preferences.begin("settings", true);
+
+  if(!preferences.isKey("values") || preferences.getBytesLength("values") != m_settings.size() * sizeof(int))
+  {
+    preferences.end();
+    return;
+  }
+
+  int data[m_settings.size()];
+  preferences.getBytes("values", data, m_settings.size() * sizeof(int));
+  m_settings.loadData(data);
+
+  preferences.end();
+}
+
+void SettingsApp::saveSettings(IHal& hal)
+{
+  HalImpl* halImpl = (HalImpl*) &hal;
+
+  Preferences& preferences = halImpl->getPreferences();
+  preferences.begin("settings", false);
+
+  int data[m_settings.size()];
+  m_settings.dumpData(data);
+  preferences.putBytes("values", data, m_settings.size() * sizeof(int));
+
+  preferences.end();
 }
 
 AppChangeType SettingsApp::appChangeNeeded()

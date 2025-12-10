@@ -3,6 +3,8 @@
 
 #define USE_ARDUINO_UART_LINK
 
+#include <Preferences.h>
+
 #include "src/Framework/Core/Hal.h"
 #include "src/Framework/Timer.h"
 #include "src/Link/ArduinoUartLink.h"
@@ -55,9 +57,8 @@ public:
   //time
   unsigned long getTimeMillis() override;
 
-  //settings
-  void saveSettings(const vgs::settings::Settings& settings);
-  void loadSettings(vgs::settings::Settings& settings);
+  //preferences
+  Preferences& getPreferences();
 
   // link
   void setUartLinkVersion(vgs::link::UartLinkVersion);
@@ -80,6 +81,8 @@ private:
   bool m_signalLightEnabled;
 
   vgs::link::Link* m_links[NUM_LINKS];
+
+  Preferences m_preferences;
 };
 
 #endif
