@@ -63,11 +63,13 @@ void WirelessLink::send(Command command, unsigned int data)
 {
   if(command == Command::Clear)
   {
-    uint8_t sendData = (uint8_t)LINK_CLEAR;
+    uint8_t sendData[2];
+    sendData[0] = LINK_WIRELESS_HEADER_COMMAND_V2;
+    sendData[1] = LINK_CLEAR;
 
     for(int i=0; i<m_numPlayers; i++)
     {
-      esp_now_send(m_players[i], &sendData, 1);
+      esp_now_send(m_players[i], sendData, 2);
     }
 
     return;
@@ -82,38 +84,50 @@ void WirelessLink::send(Command command, unsigned int data)
         return;
       }
 
-      uint8_t sendData = (uint8_t)playerCommandCodes[i] | ((uint8_t)data & 0x0F);
-      esp_now_send(m_players[data], &sendData, 1);
+      uint8_t sendData[2];
+      sendData[0] = LINK_WIRELESS_HEADER_COMMAND_V2;
+      sendData[1] = (uint8_t)playerCommandCodes[i] | ((uint8_t)data & 0x0F);
+      esp_now_send(m_players[data], sendData, 2);
     }
   }
 }
 
-void WirelessLink::onDataRecv(const esp_now_recv_info_t *info, const uint8_t *raw, int len)
+void WirelessLink::onDataRecv(const esp_now_recv_info_t *info, const uint8_t *data, int len)
+{
+  if(len != 2)
+  {
+    return; // all correct Link packages have size 2
+  }
+
+  switch(data[0])
+  {
+    case LINK_WIRELESS_HEADER_COMMAND_V2:
+      processCommand(info->src_addr, data[1]);
+      break;
+  }
+}
+
+void WirelessLink::processCommand(const uint8_t* address, uint8_t data)
 {
   if(m_dirty)
   {
     return;
   }
 
-  if(len != 1)
+  if(findPlayer(address) == -1)
   {
-    return;
-  }
-
-  if(findPlayer(info->src_addr) == -1)
-  {
-    addPlayer(info->src_addr);
+    addPlayer(address);
   }
 
   m_dirty = true;
 
-  unsigned char command = *raw & 0xF0;
-  unsigned char payload = *raw & 0x0F;
+  unsigned char command = data & 0xF0;
+  unsigned char payload = data & 0x0F;
 
   if(command == LINK_BUTTON_PRESSED)
   {
     m_command = Command::ButtonPressed;
-    m_data = (unsigned int)findPlayer(info->src_addr);
+    m_data = (unsigned int)findPlayer(address);
   }
 }
 

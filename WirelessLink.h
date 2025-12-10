@@ -17,11 +17,13 @@ public:
   unsigned int getData() override;
   void send(vgs::link::Command command, unsigned int data = 0) override;
 
-  void onDataRecv(const esp_now_recv_info_t *info, const uint8_t *raw, int len);
+  void onDataRecv(const esp_now_recv_info_t *info, const uint8_t *data, int len);
 
 private:
   int findPlayer(const uint8_t* address);
   void addPlayer(const uint8_t* address);
+
+  void processCommand(const uint8_t* address, uint8_t data);
 
 private:
   vgs::link::Command m_command = vgs::link::Command::None;
