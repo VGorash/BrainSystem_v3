@@ -24,6 +24,10 @@ private:
   void addPlayer(const uint8_t* address);
 
   void processCommand(const uint8_t* address, uint8_t data);
+  void processPingRequest(const uint8_t* address, uint8_t data);
+  void processPairingRequest(const uint8_t* address, uint8_t data);
+
+  void sendImpl(const uint8_t* address, uint8_t header, uint8_t data);
 
 private:
   vgs::link::Command m_command = vgs::link::Command::None;

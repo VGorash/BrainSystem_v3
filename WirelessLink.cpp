@@ -59,22 +59,45 @@ constexpr Command playerCommands[numPlayerCommands] =
   Command::PendingPressSignal
 };
 
+void addPeer(const uint8_t* address)
+{
+  esp_now_peer_info_t peer = {};
+  memcpy(peer.peer_addr, address, 6);
+  peer.channel = 1;
+  peer.encrypt = false;
+  esp_now_add_peer(&peer);
+
+  esp_now_rate_config_t config = {};
+  config.phymode = WIFI_PHY_MODE_LR;
+  config.rate = WIFI_PHY_RATE_LORA_250K;
+  config.ersu = false;  
+  config.dcm = false;
+  esp_now_set_peer_rate_config(address, &config);
+}
+
+void WirelessLink::sendImpl(const uint8_t* address, uint8_t header, uint8_t data)
+{
+  if(!esp_now_is_peer_exist(address))
+  {
+    addPeer(address);
+  }
+  
+  uint8_t sendData[2];
+  sendData[0] = header;
+  sendData[1] = data;
+  esp_now_send(address, sendData, 2);
+}
+
 void WirelessLink::send(Command command, unsigned int data)
 {
   if(command == Command::Clear)
   {
-    uint8_t sendData[2];
-    sendData[0] = LINK_WIRELESS_HEADER_COMMAND_V2;
-    sendData[1] = LINK_CLEAR;
-
     for(int i=0; i<m_numPlayers; i++)
     {
-      esp_now_send(m_players[i], sendData, 2);
+      sendImpl(m_players[i], LINK_WIRELESS_HEADER_COMMAND_V2, LINK_CLEAR);
     }
-
     return;
   }
-
   for(int i=0; i<numPlayerCommands; i++)
   {
     if(command == playerCommands[i])
@@ -83,11 +106,7 @@ void WirelessLink::send(Command command, unsigned int data)
       {
         return;
       }
-
-      uint8_t sendData[2];
-      sendData[0] = LINK_WIRELESS_HEADER_COMMAND_V2;
-      sendData[1] = (uint8_t)playerCommandCodes[i] | ((uint8_t)data & 0x0F);
-      esp_now_send(m_players[data], sendData, 2);
+      sendImpl(m_players[data], LINK_WIRELESS_HEADER_COMMAND_V2, (uint8_t)playerCommandCodes[i] | ((uint8_t)data & 0x0F));
     }
   }
 }
@@ -103,6 +122,12 @@ void WirelessLink::onDataRecv(const esp_now_recv_info_t *info, const uint8_t *da
   {
     case LINK_WIRELESS_HEADER_COMMAND_V2:
       processCommand(info->src_addr, data[1]);
+      break;
+    case LINK_WIRELESS_HEADER_PING_REQUEST:
+      processPingRequest(info->src_addr, data[1]);
+      break;
+    case LINK_WIRELESS_HEADER_PAIRING_REQUEST:
+      processPairingRequest(info->src_addr, data[1]);
       break;
   }
 }
@@ -129,6 +154,16 @@ void WirelessLink::processCommand(const uint8_t* address, uint8_t data)
     m_command = Command::ButtonPressed;
     m_data = (unsigned int)findPlayer(address);
   }
+}
+
+void WirelessLink::processPingRequest(const uint8_t* address, uint8_t data)
+{
+  sendImpl(address, LINK_WIRELESS_HEADER_PING_RESPONSE, data);
+}
+
+void WirelessLink::processPairingRequest(const uint8_t* address, uint8_t data)
+{
+
 }
 
 bool checkAddressEqual(const uint8_t* a, const uint8_t* b)
@@ -164,19 +199,6 @@ int WirelessLink::findPlayer(const uint8_t* address)
 
 void WirelessLink::addPlayer(const uint8_t* address)
 {
-  esp_now_peer_info_t peer = {};
-  memcpy(peer.peer_addr, address, 6);
-  peer.channel = 1;
-  peer.encrypt = false;
-  esp_now_add_peer(&peer);
-
-  esp_now_rate_config_t config = {};
-  config.phymode = WIFI_PHY_MODE_LR;
-  config.rate = WIFI_PHY_RATE_LORA_250K;
-  config.ersu = false;  
-  config.dcm = false;
-  esp_now_set_peer_rate_config(address, &config);
-
   memcpy(m_players[m_numPlayers++], address, 6);
 }
 
