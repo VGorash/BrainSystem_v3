@@ -2,27 +2,18 @@
 
 #include "src/Link/Codes.h"
 
-#include <WiFi.h>
-#include <esp_wifi.h>
-
 using namespace vgs::link;
-
-static WirelessLink* currentInstance;
 
 WirelessLink::WirelessLink()
 {
-  currentInstance = this;
+
 }
 
 void WirelessLink::init()
 {
-  WiFi.mode(WIFI_STA);
-  WiFi.setChannel(1);
-  WiFi.setTxPower(WIFI_POWER_21dBm);
+  m_interface = EspNowInterface::getInstance();
+  m_interface->setHandler(this);
   WiFi.setSleep(false);
-  esp_wifi_set_protocol(WIFI_IF_STA, WIFI_PROTOCOL_LR);
-  esp_now_init();
-  esp_now_register_recv_cb([](const esp_now_recv_info_t *info, const uint8_t *data, int len){currentInstance->onDataRecv(info, data, len);});
 }
 
 void WirelessLink::tick()
@@ -59,42 +50,13 @@ constexpr Command playerCommands[numPlayerCommands] =
   Command::PendingPressSignal
 };
 
-void addPeer(const uint8_t* address)
-{
-  esp_now_peer_info_t peer = {};
-  memcpy(peer.peer_addr, address, 6);
-  peer.channel = 1;
-  peer.encrypt = false;
-  esp_now_add_peer(&peer);
-
-  esp_now_rate_config_t config = {};
-  config.phymode = WIFI_PHY_MODE_LR;
-  config.rate = WIFI_PHY_RATE_LORA_250K;
-  config.ersu = false;  
-  config.dcm = false;
-  esp_now_set_peer_rate_config(address, &config);
-}
-
-void WirelessLink::sendImpl(const uint8_t* address, uint8_t header, uint8_t data)
-{
-  if(!esp_now_is_peer_exist(address))
-  {
-    addPeer(address);
-  }
-  
-  uint8_t sendData[2];
-  sendData[0] = header;
-  sendData[1] = data;
-  esp_now_send(address, sendData, 2);
-}
-
 void WirelessLink::send(Command command, unsigned int data)
 {
   if(command == Command::Clear)
   {
     for(int i=0; i<m_numPlayers; i++)
     {
-      sendImpl(m_players[i], LINK_WIRELESS_HEADER_COMMAND_V2, LINK_CLEAR);
+      m_interface->send(m_players[i], LINK_WIRELESS_HEADER_COMMAND_V2, LINK_CLEAR);
     }
     return;
   }
@@ -106,28 +68,23 @@ void WirelessLink::send(Command command, unsigned int data)
       {
         return;
       }
-      sendImpl(m_players[data], LINK_WIRELESS_HEADER_COMMAND_V2, (uint8_t)playerCommandCodes[i] | ((uint8_t)data & 0x0F));
+      m_interface->send(m_players[data], LINK_WIRELESS_HEADER_COMMAND_V2, (uint8_t)playerCommandCodes[i] | ((uint8_t)data & 0x0F));
     }
   }
 }
 
-void WirelessLink::onDataRecv(const esp_now_recv_info_t *info, const uint8_t *data, int len)
+void WirelessLink::handleEspNowMessage(const uint8_t* address, uint8_t header, uint8_t data)
 {
-  if(len != 2)
-  {
-    return; // all correct Link packages have size 2
-  }
-
-  switch(data[0])
+  switch(header)
   {
     case LINK_WIRELESS_HEADER_COMMAND_V2:
-      processCommand(info->src_addr, data[1]);
+      processCommand(address, data);
       break;
     case LINK_WIRELESS_HEADER_PING_REQUEST:
-      processPingRequest(info->src_addr, data[1]);
+      processPingRequest(address, data);
       break;
     case LINK_WIRELESS_HEADER_PAIRING_REQUEST:
-      processPairingRequest(info->src_addr, data[1]);
+      processPairingRequest(address, data);
       break;
   }
 }
@@ -158,7 +115,7 @@ void WirelessLink::processCommand(const uint8_t* address, uint8_t data)
 
 void WirelessLink::processPingRequest(const uint8_t* address, uint8_t data)
 {
-  sendImpl(address, LINK_WIRELESS_HEADER_PING_RESPONSE, data);
+  m_interface->send(address, LINK_WIRELESS_HEADER_PING_RESPONSE, data);
 }
 
 void WirelessLink::processPairingRequest(const uint8_t* address, uint8_t data)
