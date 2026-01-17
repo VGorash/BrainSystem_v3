@@ -22,7 +22,8 @@ enum class HalSoundMode
 
 enum CustomDisplayInfoType
 {
-  DisplayInfoSettings = 0
+  DisplayInfoSettings = 0,
+  DisplayInfoWireless = 1
 };
 
 class HalImpl : public vgs::IHal
@@ -62,6 +63,9 @@ public:
 
   // link
   void setUartLinkVersion(vgs::link::UartLinkVersion);
+  WirelessLink& getWirelessLink();
+  void loadWirelessButtonsData();
+  void saveWirelessButtonsData();
 
 private:
   void sendLinkCommand(int linkNumber, bool useLink, vgs::link::Command command, unsigned int data = 0);

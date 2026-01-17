@@ -8,6 +8,8 @@
 
 #include "src/Settings/ListSettingsItem.h"
 
+#include "WirelessPairingApp.h"
+
 using namespace vgs;
 
 IApp* createGame(const GameConfig& config)
@@ -111,6 +113,11 @@ void SettingsApp::processIdle(IHal& hal)
   if(buttonState.menu)
   {
     exit(hal);
+    return;
+  }
+  if(buttonState.custom == BUTTON_WIRELESS)
+  {
+    m_shouldOpenWirelessApp = true;
     return;
   }
   if(buttonState.enter)
@@ -221,7 +228,12 @@ AppChangeType SettingsApp::appChangeNeeded()
   if(m_shouldClose)
   {
     m_displayDirty = true;
-    m_shouldClose = false;
+    return AppChangeType::Custom;
+  }
+
+  if(m_shouldOpenWirelessApp)
+  {
+    m_displayDirty = true;
     return AppChangeType::Custom;
   }
 
@@ -230,6 +242,14 @@ AppChangeType SettingsApp::appChangeNeeded()
 
 IApp* SettingsApp::createCustomApp()
 {
+  if(m_shouldOpenWirelessApp)
+  {
+    m_shouldOpenWirelessApp = false;
+    return new WirelessPairingApp();
+  }
+
+  m_shouldClose = false;
+
   int settingsState[m_settings.size()];
   m_settings.dumpData(settingsState);
 

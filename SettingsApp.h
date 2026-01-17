@@ -32,8 +32,10 @@ private:
   
   bool m_displayDirty = true;
   bool m_settingsDirty = false;
-  bool m_shouldClose = false;
   bool m_editMode = false;
+
+  bool m_shouldClose = false;
+  bool m_shouldOpenWirelessApp = false;
 
   settings::Settings m_settings;
 

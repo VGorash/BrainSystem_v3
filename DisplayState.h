@@ -7,7 +7,8 @@
 enum class DisplayMode
 {
   Game,
-  Settings
+  Settings,
+  Wireless
 };
 
 struct SettingsDisplayInfo
@@ -16,12 +17,18 @@ struct SettingsDisplayInfo
   const vgs::settings::Settings* settings;
 };
 
+struct WirelessDisplayInfo
+{
+  int num_buttons;
+};
+
 typedef struct DisplayState
 {
   // ---- INPUT ----
   DisplayMode mode;
   vgs::GameDisplayInfo game;
   SettingsDisplayInfo settings;
+  WirelessDisplayInfo wireless;
 
   // ---- STATE ----
   bool dirty = true;

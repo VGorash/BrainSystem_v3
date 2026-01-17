@@ -80,6 +80,8 @@ void HalImpl::init()
   m_links[2] = new link::ArduinoUartLink(&Serial2);
   m_links[3] = wirelessLink;
 
+  loadWirelessButtonsData();
+
   m_blinkTimer.setTime(500);
   m_blinkTimer.setPeriodMode(true);
   m_soundTimer.setPeriodMode(false);
@@ -330,6 +332,13 @@ void HalImpl::updateDisplay(const CustomDisplayInfo& info)
     s.settings = *((SettingsDisplayInfo*)info.data);
     m_display.sync(s);
   }
+  else if(info.type == DisplayInfoWireless)
+  {
+    DisplayState s;
+    s.mode = DisplayMode::Wireless;
+    s.wireless = *((WirelessDisplayInfo*)info.data);
+    m_display.sync(s);
+  }
 }
 
 unsigned long HalImpl::getTimeMillis()
@@ -345,6 +354,52 @@ void HalImpl::setUartLinkVersion(vgs::link::UartLinkVersion version)
   m_links[1] = new link::ArduinoUartLink(&Serial1, version);
   delete m_links[2];
   m_links[2] = new link::ArduinoUartLink(&Serial2, version);
+}
+
+WirelessLink& HalImpl::getWirelessLink()
+{
+  return *(WirelessLink*)m_links[NUM_LINKS - 1];
+}
+
+constexpr const char* wirelessNamespaceKey = "wireless_link";
+constexpr const char* numWirelessButtonsKey = "num_buttons";
+constexpr const char* wirelessButtonsDataKey = "buttons_data";
+
+void HalImpl::loadWirelessButtonsData()
+{
+  WirelessLink& link = getWirelessLink();
+  Preferences& preferences = getPreferences();
+  preferences.begin(wirelessNamespaceKey, true);
+
+  if(!preferences.isKey(numWirelessButtonsKey) || !preferences.isKey(wirelessButtonsDataKey))
+  {
+    preferences.end();
+    return;
+  }
+
+  int numButtons = preferences.getInt(numWirelessButtonsKey);
+  uint8_t buttonsData[numButtons * 6];
+  preferences.getBytes(wirelessButtonsDataKey, buttonsData, numButtons * 6);
+
+  link.setButtonsData(numButtons, buttonsData);
+  preferences.end();
+}
+
+void HalImpl::saveWirelessButtonsData()
+{
+  WirelessLink& link = getWirelessLink();
+  Preferences& preferences = getPreferences();
+
+  preferences.begin(wirelessNamespaceKey, false);
+
+  int numButtons = link.getNumButtons();
+  uint8_t buttonsData[numButtons * 6];
+  link.getButtonsData(buttonsData);
+
+  preferences.putInt(numWirelessButtonsKey, numButtons);
+  preferences.putBytes(wirelessButtonsDataKey, buttonsData, numButtons * 6);
+
+  preferences.end();
 }
 
 Preferences& HalImpl::getPreferences()

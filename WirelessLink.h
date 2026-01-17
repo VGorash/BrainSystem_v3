@@ -18,22 +18,30 @@ public:
   unsigned int getData() override;
   void send(vgs::link::Command command, unsigned int data = 0) override;
 
+  // Custom methods
+  void setPairingEnable(bool enable);
+  int getNumButtons();
+  void getButtonsData(uint8_t* dest);
+  void setButtonsData(int numButtons, uint8_t* data);
+  void clearButtons();
+
 private:
   // EspNowHandler methods
   void onCommandV2(const uint8_t* address, uint8_t data) override;
-  void onPingRequest(const uint8_t* address, uint8_t data) override;
+  void onPairingRequest(const uint8_t* address, uint8_t data) override;
 
-  int findPlayer(const uint8_t* address);
-  void addPlayer(const uint8_t* address);
+  int findButton(const uint8_t* address);
+  void addButton(const uint8_t* address);
 
 private:
   vgs::link::EspNowInterface* m_interface = nullptr;
   vgs::link::Command m_command = vgs::link::Command::None;
   unsigned int m_data = 0;
-  bool m_dirty;
+  bool m_dirty = false;
+  bool m_pairingEnabled = false;
 
-  uint8_t m_players[6][vgs::link::Link::maxPlayers];
-  int m_numPlayers = 0;
+  uint8_t m_buttons[6][vgs::link::Link::maxPlayers];
+  int m_numButtons = 0;
 };
 
 #endif

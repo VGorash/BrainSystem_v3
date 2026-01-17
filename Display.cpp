@@ -136,11 +136,22 @@ ButtonState Display::syncTouchscreen()
 void startStopButtonUpdate(const DisplayState& state, Element* eRaw)
 {
   TextElement* e = (TextElement*) eRaw;
-  if(state.mode != DisplayMode::Game)
+
+  if(state.mode == DisplayMode::Settings)
   {
     e->setHidden(true);
     return;
   }
+
+  if(state.mode == DisplayMode::Wireless)
+  {
+    e->setHidden(false);
+    e->setText("Удалить все");
+    e->setBackgroundColor(TFT_RED);
+    e->setBorderColor(TFT_RED);
+    return;
+  }
+
   if(String(state.game.name).indexOf("БРЕЙН-РИНГ") >= 0 && state.game.state == GameState::Press)
   {
     e->setHidden(true);
@@ -163,6 +174,17 @@ void startStopButtonUpdate(const DisplayState& state, Element* eRaw)
 
 void startStopButtonOnClick(DisplayState& state, Element* e)
 {
+  if(state.mode == DisplayMode::Settings)
+  {
+    return;
+  }
+
+  if(state.mode == DisplayMode::Wireless)
+  {
+    state.button_state.stop = true;
+    return;
+  }
+
   if(state.game.state == GameState::Idle)
   {
     state.button_state.start = true;
@@ -390,6 +412,10 @@ void titlePanelUpdate(const DisplayState& state, Element* eRaw)
       e->setText("НАСТРОЙКИ");
     }
   }
+  if(state.mode == DisplayMode::Wireless)
+  {
+    e->setText("СОПРЯЖЕНИЕ");
+  }
 }
 
 TextElement* setupTitlePanel(TextElement* e)
@@ -421,7 +447,7 @@ void settingsIconUpdate(const DisplayState& state, Element* eRaw)
   {
     e->setBitmap(bitmap_back_30_30);
   }
-  else if(state.mode == DisplayMode::Settings)
+  else if(state.mode == DisplayMode::Settings || state.mode == DisplayMode::Wireless)
   {
     e->setBitmap(bitmap_close_30_30);
   }
@@ -437,6 +463,42 @@ BitmapElement* setupSettingsIcon(BitmapElement* e)
   e->setBackgroundColor(COMMON_BACKGROUND_COLOR);
   e->setUpdateCallback(settingsIconUpdate);
   e->setOnPressCallback(settingsIconOnClick);
+  return e;
+}
+
+void wirelessIconUpdate(const DisplayState& state, Element* eRaw)
+{
+  BitmapElement* e = (BitmapElement*) eRaw;
+
+  if(state.mode != DisplayMode::Settings)
+  {
+    e->setHidden(true);
+    return;
+  }
+
+  e->setHidden(false);
+
+  if(state.settings.edit_mode)
+  {
+    e->setBitmap(nullptr);
+  }
+  else
+  {
+    e->setBitmap(bitmap_wireless_30_30);
+  }
+}
+
+void wirelessIconOnClick(DisplayState& state, Element* e)
+{
+  state.button_state.custom = BUTTON_WIRELESS;
+}
+
+BitmapElement* setupWirelessIcon(BitmapElement* e)
+{
+  e->setBitmapColor(TFT_WHITE);
+  e->setBackgroundColor(COMMON_BACKGROUND_COLOR);
+  e->setUpdateCallback(wirelessIconUpdate);
+  e->setOnPressCallback(wirelessIconOnClick);
   return e;
 }
 
@@ -465,6 +527,11 @@ TextElement* setupModePanel(TextElement* e)
 
 void settingsPanelOnClick(DisplayState& state, Element* eRaw)
 {
+  if(state.mode != DisplayMode::Settings)
+  {
+    return;
+  }
+
   if(state.settings.edit_mode)
   {
     state.button_state.menu = true;
@@ -479,20 +546,27 @@ void settingsPanelUpdate(const DisplayState& state, Element* eRaw)
 {
   TextElement* e = (TextElement*) eRaw;
 
-  if(state.mode != DisplayMode::Settings)
+  if(state.mode == DisplayMode::Settings)
   {
-    e->setHidden(true);
-    return;
-  }
-  e->setHidden(false);
+    e->setHidden(false);
 
-  if(state.settings.edit_mode)
+    if(state.settings.edit_mode)
+    {
+      e->setText(state.settings.settings->getCurrentItem().getValueStr());
+    }
+    else
+    {
+      e->setText(state.settings.settings->getCurrentItem().getName());
+    }
+  }
+  else if(state.mode == DisplayMode::Wireless)
   {
-    e->setText(state.settings.settings->getCurrentItem().getValueStr());
+    e->setHidden(false);
+    e->setText(String("Кнопки: ") + String(state.wireless.num_buttons));
   }
   else
   {
-    e->setText(state.settings.settings->getCurrentItem().getName());
+    e->setHidden(true);
   }
 }
 
@@ -594,5 +668,6 @@ void Display::initElements()
   // TOP PANEL
   TextElement* titlePanel = setupTitlePanel(createTextElement({80, 0, 320, 40}));
   TextElement* modePanel = setupModePanel(createTextElement({400, 0, 80, 40}));
-  BitmapElement* setingsIcon = setupSettingsIcon(createBitmapElement({5, 5, 30, 30}));
+  BitmapElement* setingsIcon = setupSettingsIcon(createBitmapElement({10, 10, 30, 30}));
+  BitmapElement* wirelessIcon = setupWirelessIcon(createBitmapElement({440, 10, 30, 30}));
 }

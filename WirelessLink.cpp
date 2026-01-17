@@ -47,31 +47,62 @@ void WirelessLink::send(Command command, unsigned int data)
 
   if(command == Command::Clear) // broadcast
   {
-    for(int i=0; i<m_numPlayers; i++)
+    for(int i=0; i<m_numButtons; i++)
     {
-      m_interface->send(m_players[i], LINK_WIRELESS_HEADER_COMMAND_V2, code);
+      m_interface->send(m_buttons[i], LINK_WIRELESS_HEADER_COMMAND_V2, code);
     }
     return;
   }
 
-  if(data >= m_numPlayers)
+  if(data < m_numButtons)
   {
-    return;
+    m_interface->send(m_buttons[data], LINK_WIRELESS_HEADER_COMMAND_V2, code);
+  }
+}
+
+void WirelessLink::setPairingEnable(bool enable)
+{
+  m_pairingEnabled = enable;
+}
+
+int WirelessLink::getNumButtons()
+{
+  return m_numButtons;
+}
+
+void WirelessLink::getButtonsData(uint8_t* dest)
+{
+  for(int i=0; i<m_numButtons; i++)
+  {
+    memcpy(dest + i * 6, m_buttons[i], 6);
+  }
+}
+
+void WirelessLink::setButtonsData(int numButtons, uint8_t* data)
+{
+  if(numButtons > Link::maxPlayers)
+  {
+    numButtons = Link::maxPlayers;
   }
 
-  m_interface->send(m_players[data], LINK_WIRELESS_HEADER_COMMAND_V2, code);
+  for(int i=0; i<numButtons; i++)
+  {
+    memcpy(m_buttons[i], data + i * 6, 6);
+  }
+
+  m_numButtons = numButtons;
+}
+
+void WirelessLink::clearButtons()
+{
+  m_numButtons = 0;
 }
 
 void WirelessLink::onCommandV2(const uint8_t* address, uint8_t data)
 {
-  if(m_dirty)
+  if(m_dirty || findButton(address) == -1)
   {
     return;
-  }
-
-  if(findPlayer(address) == -1)
-  {
-    addPlayer(address);
   }
 
   m_command = Command::None;
@@ -80,9 +111,22 @@ void WirelessLink::onCommandV2(const uint8_t* address, uint8_t data)
   m_dirty = codeToCommand(data, m_command, m_data);
 }
 
-void WirelessLink::onPingRequest(const uint8_t* address, uint8_t data)
+void WirelessLink::onPairingRequest(const uint8_t* address, uint8_t data)
 {
-  m_interface->send(address, LINK_WIRELESS_HEADER_PING_RESPONSE, data);
+  if(!m_pairingEnabled)
+  {
+    return;
+  }
+
+  if(data == LINK_WIRELESS_DEVICE_BUTTON)
+  {
+    if(findButton(address) == -1)
+    {
+      addButton(address);
+    }
+
+    m_interface->send(address, LINK_WIRELESS_HEADER_PAIRING_RESPONSE, findButton(address));
+  }
 }
 
 bool checkAddressEqual(const uint8_t* a, const uint8_t* b)
@@ -100,24 +144,24 @@ bool checkAddressEqual(const uint8_t* a, const uint8_t* b)
   return equal;
 }
 
-int WirelessLink::findPlayer(const uint8_t* address)
+int WirelessLink::findButton(const uint8_t* address)
 {
-  int player = -1;
+  int button = -1;
 
-  for(int i=0; i<m_numPlayers; i++)
+  for(int i=0; i<m_numButtons; i++)
   {
-    if(checkAddressEqual(address, m_players[i]))
+    if(checkAddressEqual(address, m_buttons[i]))
     {
-      player = i;
+      button = i;
       break;
     }
   }
 
-  return player;
+  return button;
 }
 
-void WirelessLink::addPlayer(const uint8_t* address)
+void WirelessLink::addButton(const uint8_t* address)
 {
-  memcpy(m_players[m_numPlayers++], address, 6);
+  memcpy(m_buttons[m_numButtons++], address, 6);
 }
 

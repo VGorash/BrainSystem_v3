@@ -17,6 +17,9 @@
 
 #define NUM_PLAYERS 4
 
+// custom button values
+#define BUTTON_WIRELESS 0
+
 class Display
 {
 public:
