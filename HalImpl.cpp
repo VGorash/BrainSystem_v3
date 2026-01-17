@@ -1,4 +1,5 @@
 #include "HalImpl.h"
+#include "src/Framework/sounds.h"
 
 #define BUTTON_PLAYER_4 34
 #define BUTTON_PLAYER_3 35
@@ -17,20 +18,6 @@
 #define UART1_TX 26
 #define UART2_RX 16
 #define UART2_TX 17
-
-#define SOUND_TONE_START 2000
-#define SOUND_TONE_PRESS 1000
-#define SOUND_TONE_FALSTART 500
-#define SOUND_TONE_TICK 1500
-#define SOUND_TONE_SIGNAL 1500
-#define SOUND_TONE_END 250
-
-#define SOUND_DURATION_START 1000
-#define SOUND_DURATION_PRESS 1000
-#define SOUND_DURATION_FALSTART 500
-#define SOUND_DURATION_TICK 250
-#define SOUND_DURATION_SIGNAL 1000
-#define SOUND_DURATION_END 1000
 
 using namespace vgs;
 
@@ -119,7 +106,6 @@ void HalImpl::tick()
     m_links[i]->tick();
   }
 }
-
 
 ButtonState HalImpl::getButtonState()
 {
@@ -270,36 +256,13 @@ void HalImpl::blinkLed(int player)
 
 void HalImpl::sound(HalSound soundType)
 {
-  if(m_soundMode == HalSoundMode::Disabled)
+  if(m_soundMode == HalSoundMode::Disabled || soundType == HalSound::None)
   {
     ledcDetach(BUZZER);
     return;
   }
 
-  switch(soundType)
-  {
-    case HalSound::Start:
-      sound(SOUND_TONE_START, SOUND_DURATION_START);
-      break;
-    case HalSound::Press:
-      sound(SOUND_TONE_PRESS, SOUND_DURATION_PRESS);
-      break;
-    case HalSound::Falstart:
-      sound(SOUND_TONE_FALSTART, SOUND_DURATION_FALSTART);
-      break;
-    case HalSound::Tick:
-      sound(SOUND_TONE_TICK, SOUND_DURATION_TICK);
-      break;
-    case HalSound::Signal:
-      sound(SOUND_TONE_SIGNAL, SOUND_DURATION_SIGNAL);
-      break;
-    case HalSound::End:
-      sound(SOUND_TONE_END, SOUND_DURATION_END);
-      break;
-    case HalSound::None:
-      ledcDetach(BUZZER);
-      break;
-  }
+  sound(toneFromSound(soundType), durationFromSound(soundType));
 }
 
 void HalImpl::sound(unsigned int frequency, unsigned int duration)

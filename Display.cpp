@@ -2,16 +2,21 @@
 #include "binaryttf.h"
 #include "icons.h"
 
+#include "src/Framework/colors.h"
+
 #define SCREEN_WIDTH 480
 #define SCREEN_HEIGHT 320
 #define MAX_ELEMENTS 64
 
 using namespace vgs;
 
-constexpr int playerColors[NUM_PLAYERS] = {TFT_YELLOW, TFT_BLUE, TFT_GREEN, TFT_RED};
-
 volatile bool touchAvailable = false;
 void IRAM_ATTR touchISR() { touchAvailable = true;}
+
+uint16_t color565(Color color)
+{
+  return ((color.r & 0xF8) << 8) | ((color.g & 0xFC) << 3) | (color.b >> 3);
+}
 
 Display::Display()
 {
@@ -300,13 +305,14 @@ void mainPanelUpdate(const DisplayState& state, Element* eRaw)
       {
         e->setText(String("К") + String(state.game.player + 1));
       }
-      e->setTextColor(playerColors[state.game.player % NUM_PLAYERS]);
+
+      e->setTextColor(color565(colorFromPlayerNumber(state.game.player % 16 - NUM_PLAYERS)));
       break;
     }
     case GameState::Falstart:
     {
       e->setText("ФС");
-      e->setTextColor(playerColors[state.game.player % NUM_PLAYERS]);
+      e->setTextColor(color565(colorFromPlayerNumber(state.game.player % 16 - NUM_PLAYERS)));
       break;
     }
   }
