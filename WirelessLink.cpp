@@ -129,6 +129,14 @@ void WirelessLink::onPairingRequest(const uint8_t* address, uint8_t data)
   }
 }
 
+void WirelessLink::onBatteryInfo(const uint8_t* address, uint8_t data)
+{
+  if(findButton(address) != -1) // info from button
+  {
+    //Serial.println(String("Button ") + String(findButton(address)) + ": battery is " + String(data) + String("%"));
+  }
+}
+
 bool checkAddressEqual(const uint8_t* a, const uint8_t* b)
 {
   bool equal = true;

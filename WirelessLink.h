@@ -29,6 +29,7 @@ private:
   // EspNowHandler methods
   void onCommandV2(const uint8_t* address, uint8_t data) override;
   void onPairingRequest(const uint8_t* address, uint8_t data) override;
+  void onBatteryInfo(const uint8_t* address, uint8_t data) override;
 
   int findButton(const uint8_t* address);
   void addButton(const uint8_t* address);
