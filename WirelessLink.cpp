@@ -100,7 +100,8 @@ void WirelessLink::clearButtons()
 
 void WirelessLink::onCommandV2(const uint8_t* address, uint8_t data)
 {
-  if(m_dirty || findButton(address) == -1)
+  int buttonNumber = findButton(address);
+  if(m_dirty || buttonNumber == -1)
   {
     return;
   }
@@ -109,6 +110,7 @@ void WirelessLink::onCommandV2(const uint8_t* address, uint8_t data)
   m_data = 0;
 
   m_dirty = codeToCommand(data, m_command, m_data);
+  m_data = buttonNumber;
 }
 
 void WirelessLink::onPairingRequest(const uint8_t* address, uint8_t data)
@@ -133,7 +135,7 @@ void WirelessLink::onBatteryInfo(const uint8_t* address, uint8_t data)
 {
   if(findButton(address) != -1) // info from button
   {
-    //Serial.println(String("Button ") + String(findButton(address)) + ": battery is " + String(data) + String("%"));
+    Serial.println(String("Button ") + String(findButton(address)) + ": battery is " + String(data) + String("%"));
   }
 }
 
