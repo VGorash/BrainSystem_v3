@@ -1,5 +1,9 @@
 #include "WirelessPairingApp.h"
+
+#ifdef USE_WIRELESS_LINK
+
 #include "HalImpl.h"
+
 
 using namespace vgs;
 
@@ -81,3 +85,5 @@ IApp* WirelessPairingApp::createCustomApp()
 {
   return nullptr;
 }
+
+#endif // #ifdef USE_WIRELESS_LINK

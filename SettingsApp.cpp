@@ -8,7 +8,9 @@
 
 #include "src/Settings/ListSettingsItem.h"
 
-#include "WirelessPairingApp.h"
+#ifdef USE_WIRELESS_LINK
+  #include "WirelessPairingApp.h"
+#endif
 
 using namespace vgs;
 
@@ -55,13 +57,25 @@ constexpr const char* modeNames[3] = {"БЕЗ ФАЛЬСТАРТОВ", "С ФА�
 constexpr const char* onOffNames[2] = {"ВКЛ", "ВЫКЛ"};
 constexpr const char* linkModes[2] = {"V1 (устаревший)", "V2 (обычный)"};
 
+constexpr int gameKey = 0;
+constexpr int modeKey = gameKey + 1;
+constexpr int soundKey = modeKey + 1;
+constexpr int lightKey = soundKey + 1;
+
+#ifdef USE_UART_LINKS
+  constexpr int uartModeKey = lightKey + 1;
+#endif
+
 SettingsApp::SettingsApp(bool launchGame) : m_launchGame(launchGame)
 {
-  m_settings.addItem(new settings::ListSettingsItem("Тип игры", gameCount, gameNames));  
+  m_settings.addItem(new settings::ListSettingsItem("Тип игры", gameCount, gameNames));   
   m_settings.addItem(new settings::ListSettingsItem("Режим", 3, modeNames));
   m_settings.addItem(new settings::ListSettingsItem("Звук", 2, onOffNames));
   m_settings.addItem(new settings::ListSettingsItem("Свет", 2, onOffNames));
+
+#ifdef USE_UART_LINKS
   m_settings.addItem(new settings::ListSettingsItem("Link", 2, linkModes));
+#endif
 }
 
 void SettingsApp::init(IHal& hal)
@@ -115,11 +129,15 @@ void SettingsApp::processIdle(IHal& hal)
     exit(hal);
     return;
   }
+
+#ifdef USE_WIRELESS_LINK
   if(buttonState.custom == BUTTON_WIRELESS)
   {
     m_shouldOpenWirelessApp = true;
     return;
   }
+#endif
+
   if(buttonState.enter)
   {
     m_editMode = true;
@@ -178,13 +196,17 @@ void SettingsApp::exit(IHal& hal)
 
   int settingsState[m_settings.size()];
   m_settings.dumpData(settingsState);
-  int soundMode = settingsState[2];
-  bool signalLightDisabled = settingsState[3];
-  int linkVersion = settingsState[4];
 
+  int soundMode = settingsState[soundKey];
   halImpl->setSoundMode(static_cast<HalSoundMode>(soundMode));
+
+  bool signalLightDisabled = settingsState[lightKey];
   halImpl->setSignalLightEnabled(!signalLightDisabled);
+
+#ifdef USE_UART_LINKS
+  int linkVersion = settingsState[uartModeKey];
   halImpl->setUartLinkVersion(static_cast<vgs::link::UartLinkVersion>(linkVersion));
+#endif
 
   m_shouldClose = true;
 }
@@ -231,33 +253,37 @@ AppChangeType SettingsApp::appChangeNeeded()
     return AppChangeType::Custom;
   }
 
+#ifdef USE_WIRELESS_LINK
   if(m_shouldOpenWirelessApp)
   {
     m_displayDirty = true;
     return AppChangeType::Custom;
   }
+#endif
 
   return AppChangeType::None;
 }
 
 IApp* SettingsApp::createCustomApp()
 {
+#ifdef USE_WIRELESS_LINK
   if(m_shouldOpenWirelessApp)
   {
     m_shouldOpenWirelessApp = false;
     return new WirelessPairingApp();
   }
+#endif
 
   m_shouldClose = false;
 
   int settingsState[m_settings.size()];
   m_settings.dumpData(settingsState);
 
-  int gameNumber = settingsState[0];
+  int gameNumber = settingsState[gameKey];
   
   GameConfig config;
   config.displayed_name = gameNames[gameNumber];
-  config.mode = static_cast<GameMode>(settingsState[1]);
+  config.mode = static_cast<GameMode>(settingsState[modeKey]);
 
   return gameConstructors[gameNumber](config);
 }

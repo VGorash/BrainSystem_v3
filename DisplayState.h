@@ -4,11 +4,15 @@
 #include "src/Framework/Core/Hal.h"
 #include "src/Settings/Settings.h"
 
+#include "hardware_config.h"
+
 enum class DisplayMode
 {
   Game,
   Settings,
+#ifdef USE_WIRELESS_LINK
   Wireless
+#endif
 };
 
 struct SettingsDisplayInfo
@@ -17,10 +21,12 @@ struct SettingsDisplayInfo
   const vgs::settings::Settings* settings;
 };
 
+#ifdef USE_WIRELESS_LINK
 struct WirelessDisplayInfo
 {
   int num_buttons;
 };
+#endif
 
 typedef struct DisplayState
 {
@@ -28,7 +34,9 @@ typedef struct DisplayState
   DisplayMode mode;
   vgs::GameDisplayInfo game;
   SettingsDisplayInfo settings;
+#ifdef USE_WIRELESS_LINK
   WirelessDisplayInfo wireless;
+#endif
 
   // ---- STATE ----
   bool dirty = true;

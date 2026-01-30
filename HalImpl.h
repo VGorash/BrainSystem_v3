@@ -1,18 +1,22 @@
 #ifndef HAL_IMPL_H
 #define HAL_IMPL_H
 
-#define USE_ARDUINO_UART_LINK
+#include "hardware_config.h"
+#include "Display.h"
 
 #include <Preferences.h>
 
 #include "src/Framework/Core/Hal.h"
 #include "src/Framework/Timer.h"
-#include "src/Link/ArduinoUartLink.h"
 
-#include "Display.h"
-#include "WirelessLink.h"
+#ifdef USE_UART_LINKS
+  #define USE_ARDUINO_UART_LINK
+  #include "src/Link/ArduinoUartLink.h"
+#endif
 
-#define NUM_LINKS 4
+#ifdef USE_WIRELESS_LINK
+  #include "WirelessLink.h"
+#endif
 
 enum class HalSoundMode
 {
@@ -23,7 +27,9 @@ enum class HalSoundMode
 enum CustomDisplayInfoType
 {
   DisplayInfoSettings = 0,
+#ifdef USE_WIRELESS_LINK
   DisplayInfoWireless = 1
+#endif
 };
 
 class HalImpl : public vgs::IHal
@@ -62,31 +68,43 @@ public:
   Preferences& getPreferences();
 
   // link
+#ifdef USE_UART_LINKS
   void setUartLinkVersion(vgs::link::UartLinkVersion);
+#endif
+
+#ifdef USE_WIRELESS_LINK
   WirelessLink& getWirelessLink();
   void loadWirelessButtonsData();
   void saveWirelessButtonsData();
+#endif
 
 private:
-  void sendLinkCommand(int linkNumber, bool useLink, vgs::link::Command command, unsigned int data = 0);
   void blinkLed(int player);
+
+#ifdef USE_LINKS
+  void sendLinkCommand(int linkNumber, bool useLink, vgs::link::Command command, unsigned int data = 0);
+#endif
 
 private:  
   Display m_display;
-
-  Button m_playerButtons[NUM_PLAYERS];
-
   vgs::Timer m_blinkTimer;
   vgs::Timer m_soundTimer;
   bool m_blinkState = 0;
-  bool m_blinkingLeds[NUM_PLAYERS];
-
-  HalSoundMode m_soundMode;
   bool m_signalLightEnabled;
-
-  vgs::link::Link* m_links[NUM_LINKS];
-
+  HalSoundMode m_soundMode;
   Preferences m_preferences;
+
+#ifdef USE_WIRED_BUTTONS
+  Button m_wiredButtons[NUM_WIRED_BUTTONS];
+#endif
+
+#ifdef USE_BUTTON_LEDS
+  bool m_blinkingLeds[NUM_BUTTON_LEDS];
+#endif
+
+#ifdef USE_LINKS
+  vgs::link::Link* m_links[NUM_LINKS];
+#endif
 };
 
 #endif

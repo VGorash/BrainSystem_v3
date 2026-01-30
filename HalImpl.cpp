@@ -1,73 +1,65 @@
 #include "HalImpl.h"
 #include "src/Framework/sounds.h"
 
-#define BUTTON_PLAYER_4 34
-#define BUTTON_PLAYER_3 35
-#define BUTTON_PLAYER_2 5
-#define BUTTON_PLAYER_1 4
-
-#define LED_PLAYER_4 23
-#define LED_PLAYER_3 22
-#define LED_PLAYER_2 19
-#define LED_PLAYER_1 12
-#define LED_SIGNAL 21
-
-#define BUZZER 18
-
-#define UART1_RX 27
-#define UART1_TX 26
-#define UART2_RX 16
-#define UART2_TX 17
-
 using namespace vgs;
-
-static const int playerButtonPins[NUM_PLAYERS] = {BUTTON_PLAYER_1, BUTTON_PLAYER_2, BUTTON_PLAYER_3, BUTTON_PLAYER_4};
-static const int playerLedPins[NUM_PLAYERS] = {LED_PLAYER_1, LED_PLAYER_2, LED_PLAYER_3, LED_PLAYER_4};
 
 HalImpl::HalImpl()
 {
+#ifdef USE_LINKS
   for (int i=0; i<NUM_LINKS; i++)
   {
     m_links[i] = nullptr;
   }
+#endif
 }
 
 HalImpl::~HalImpl()
 {
+#ifdef USE_LINKS
   for (int i=0; i<NUM_LINKS; i++)
   {
     delete m_links[i];
   }
+#endif
 }
 
 void HalImpl::init()
 {
   m_display.init();
 
-  for(int i=0; i<NUM_PLAYERS; i++)
+#ifdef USE_WIRED_BUTTONS
+  for(int i=0; i<NUM_WIRED_BUTTONS; i++)
   {
-    m_playerButtons[i].init(playerButtonPins[i], INPUT);
-    pinMode(playerLedPins[i], OUTPUT);
+    m_wiredButtons[i].init(wiredButtonPins[i], INPUT);
   }
+#endif
 
-  pinMode(LED_SIGNAL, OUTPUT);
+#ifdef USE_BUTTON_LEDS
+  for(int i=0; i<NUM_BUTTON_LEDS; i++)
+  {
+    pinMode(buttonLedPins[i], OUTPUT);
+  }
+#endif
 
-  pinMode(UART1_RX, INPUT_PULLUP);
-  pinMode(UART2_RX, INPUT_PULLUP);
+#ifdef USE_SIGNAL_LED
+  pinMode(SIGNAL_LED_PIN, OUTPUT);
+#endif
 
-  Serial.begin(9600, SERIAL_8N1);
-  Serial1.begin(9600, SERIAL_8N1, UART1_RX, UART1_TX);
-  Serial2.begin(9600, SERIAL_8N1, UART2_RX, UART2_TX);
+#ifdef USE_UART_LINKS
+  for(int i=0; i<NUM_UART_LINKS; i++)
+  {
+    pinMode(uartRxPins[i], INPUT_PULLUP);
+    uartSerials[i]->begin(9600, SERIAL_8N1, uartRxPins[i], uartTxPins[i]);
+    m_links[i] = new link::ArduinoUartLink(uartSerials[i]);
+  }
+#endif
 
+#ifdef USE_WIRELESS_LINK
   WirelessLink* wirelessLink = new WirelessLink();
   wirelessLink->init();
-
-  m_links[0] = new link::ArduinoUartLink(&Serial);
-  m_links[1] = new link::ArduinoUartLink(&Serial1);
-  m_links[2] = new link::ArduinoUartLink(&Serial2);
-  m_links[3] = wirelessLink;
-
+  m_links[NUM_LINKS - 1] = wirelessLink; // wireless link is always last
   loadWirelessButtonsData();
+#endif
 
   m_blinkTimer.setTime(500);
   m_blinkTimer.setPeriodMode(true);
@@ -82,54 +74,64 @@ void HalImpl::tick()
   {
     m_blinkState = !m_blinkState;
 
-    for(int i=0; i<NUM_PLAYERS; i++)
+#ifdef USE_BUTTON_LEDS
+    for(int i=0; i<NUM_BUTTON_LEDS; i++)
     {
       if(m_blinkingLeds[i])
       {
-        digitalWrite(playerLedPins[i], m_blinkState);
+        digitalWrite(buttonLedPins[i], m_blinkState);
       }
     }
+#endif
   }
 
-  for(int i=0; i<NUM_PLAYERS; i++)
+#ifdef USE_WIRED_BUTTONS
+  for(int i=0; i<NUM_WIRED_BUTTONS; i++)
   {
-    m_playerButtons[i].tick();
+    m_wiredButtons[i].tick();
   }
+#endif
 
   if(m_soundTimer.tick(*this))
   {
-    ledcDetach(BUZZER);
+    ledcDetach(BUZZER_PIN);
   }
 
+#ifdef USE_LINKS
   for (int i=0; i<NUM_LINKS; i++)
   {
     m_links[i]->tick();
   }
+#endif
 }
 
 ButtonState HalImpl::getButtonState()
 {
   ButtonState s = m_display.syncTouchscreen();
 
-  for(int i=0; i<NUM_PLAYERS; i++)
+#ifdef USE_WIRED_BUTTONS
+  for(int i=0; i<NUM_WIRED_BUTTONS; i++)
   {
-    if(m_playerButtons[i].press())
+    if(m_wiredButtons[i].press())
     {
       s.player = i;
       break;
     }
   }
+#endif
 
   if(s.player < 0)
   {
+#ifdef USE_LINKS
     for (int i=0; i<NUM_LINKS; i++)
     {
       if(m_links[i]->getCommand() == link::Command::ButtonPressed)
       {
-        s.player = m_links[i]->getData() + NUM_PLAYERS + link::Link::maxPlayers * i;
+        s.player = m_links[i]->getData() + NUM_WIRED_BUTTONS + link::Link::maxPlayers * i;
         break;
       }
     }
+#endif
   }
 
   return s;
@@ -142,14 +144,17 @@ void HalImpl::correctPressSignal(int player)
     return;
   }
 
-  if(player < NUM_PLAYERS)
+#ifdef USE_BUTTON_LEDS
+  if(player < NUM_WIRED_BUTTONS)
   {
-    digitalWrite(playerLedPins[player], 1);
+    digitalWrite(buttonLedPins[player], 1);
     return;
   }
+#endif
 
-  player -= NUM_PLAYERS;
+  player -= NUM_WIRED_BUTTONS;
 
+#ifdef USE_LINKS
   if(player < link::Link::maxPlayers * NUM_LINKS)
   {
     sendLinkCommand(player / link::Link::maxPlayers, true, link::Command::CorrectPressSignal, player % link::Link::maxPlayers);
@@ -159,6 +164,7 @@ void HalImpl::correctPressSignal(int player)
   {
     sendLinkCommand(i, true, link::Command::DisplayCorrectPressSignal, player % link::Link::maxPlayers);
   }
+#endif
 }
 
 void HalImpl::falstartPressSignal(int player)
@@ -167,14 +173,16 @@ void HalImpl::falstartPressSignal(int player)
   {
     return;
   }
-  if(player < NUM_PLAYERS)
+
+  if(player < NUM_WIRED_BUTTONS)
   {
     blinkLed(player);
     return;
   }
 
-  player -= NUM_PLAYERS;
+  player -= NUM_WIRED_BUTTONS;
 
+#ifdef USE_LINKS
   if(player < link::Link::maxPlayers * NUM_LINKS)
   {
     sendLinkCommand(player / link::Link::maxPlayers, true, link::Command::FalstartPressSignal, player % link::Link::maxPlayers);
@@ -184,6 +192,7 @@ void HalImpl::falstartPressSignal(int player)
   {
     sendLinkCommand(i, true, link::Command::DisplayFalstartPressSignal, player % link::Link::maxPlayers);
   }
+#endif
 }
 
 void HalImpl::pendingPressSignal(int player)
@@ -192,49 +201,61 @@ void HalImpl::pendingPressSignal(int player)
   {
     return;
   }
-  if(player < NUM_PLAYERS)
+  if(player < NUM_WIRED_BUTTONS)
   {
     blinkLed(player);
     return;
   }
 
-  player -= NUM_PLAYERS;
+  player -= NUM_WIRED_BUTTONS;
 
+#ifdef USE_LINKS
   if(player < link::Link::maxPlayers * NUM_LINKS)
   {
     sendLinkCommand(player / link::Link::maxPlayers, true, link::Command::PendingPressSignal, player % link::Link::maxPlayers);
   }
+#endif
 }
 
 void HalImpl::gameStartSignal()
 {
   if(m_signalLightEnabled)
   {
-    digitalWrite(LED_SIGNAL, 1);
+#ifdef USE_SIGNAL_LED
+    digitalWrite(SIGNAL_LED_PIN, 1);
+#endif
   }
 
+#ifdef USE_LINKS
   for (int i=0; i<NUM_LINKS; i++)
   {
     sendLinkCommand(i, true, link::Command::GameStartSignal);
   }
+#endif
 }
 
 void HalImpl::clearSignals()
 {
-  digitalWrite(LED_SIGNAL, 0);
+#ifdef USE_SIGNAL_LED
+  digitalWrite(SIGNAL_LED_PIN, 0);
+#endif
 
-  for(int i=0; i<NUM_PLAYERS; i++)
+#ifdef USE_BUTTON_LEDS
+  for(int i=0; i<NUM_BUTTON_LEDS; i++)
   {
-    digitalWrite(playerLedPins[i], 0);
+    digitalWrite(buttonLedPins[i], 0);
     m_blinkingLeds[i] = false;
   }
+#endif
 
   m_blinkTimer.stop();
 
+#ifdef USE_LINKS
   for (int i=0; i<NUM_LINKS; i++)
   {
     sendLinkCommand(i, true, link::Command::Clear);
   }
+#endif
 }
 
 void HalImpl::setSignalLightEnabled(bool enabled)
@@ -244,8 +265,10 @@ void HalImpl::setSignalLightEnabled(bool enabled)
 
 void HalImpl::blinkLed(int player)
 {
-  digitalWrite(playerLedPins[player], 1);
+#ifdef USE_BUTTON_LEDS
+  digitalWrite(buttonLedPins[player], 1);
   m_blinkingLeds[player] = true;
+#endif
 
   if(!m_blinkTimer.isStarted())
   {
@@ -258,7 +281,7 @@ void HalImpl::sound(HalSound soundType)
 {
   if(m_soundMode == HalSoundMode::Disabled || soundType == HalSound::None)
   {
-    ledcDetach(BUZZER);
+    ledcDetach(BUZZER_PIN);
     return;
   }
 
@@ -269,8 +292,8 @@ void HalImpl::sound(unsigned int frequency, unsigned int duration)
 {
   m_soundTimer.setTime(duration);
   m_soundTimer.start(*this);
-  ledcAttach(BUZZER, 50, 10);
-  ledcWriteTone(BUZZER, frequency);
+  ledcAttach(BUZZER_PIN, 50, 10);
+  ledcWriteTone(BUZZER_PIN, frequency);
 }
 
 void HalImpl::setSoundMode(HalSoundMode mode)
@@ -295,6 +318,8 @@ void HalImpl::updateDisplay(const CustomDisplayInfo& info)
     s.settings = *((SettingsDisplayInfo*)info.data);
     m_display.sync(s);
   }
+  
+#ifdef USE_WIRELESS_LINK
   else if(info.type == DisplayInfoWireless)
   {
     DisplayState s;
@@ -302,6 +327,7 @@ void HalImpl::updateDisplay(const CustomDisplayInfo& info)
     s.wireless = *((WirelessDisplayInfo*)info.data);
     m_display.sync(s);
   }
+#endif
 }
 
 unsigned long HalImpl::getTimeMillis()
@@ -309,15 +335,18 @@ unsigned long HalImpl::getTimeMillis()
   return millis();
 }
 
+#ifdef USE_UART_LINKS
 void HalImpl::setUartLinkVersion(vgs::link::UartLinkVersion version)
 {
-  delete m_links[0];
-  m_links[0] = new link::ArduinoUartLink(&Serial, version);
-  delete m_links[1];
-  m_links[1] = new link::ArduinoUartLink(&Serial1, version);
-  delete m_links[2];
-  m_links[2] = new link::ArduinoUartLink(&Serial2, version);
+  for(int i=0; i<NUM_UART_LINKS; i++)
+  {
+    delete m_links[i];
+    m_links[i] = new link::ArduinoUartLink(uartSerials[i], version);
+  }
 }
+#endif
+
+#ifdef USE_WIRELESS_LINK
 
 WirelessLink& HalImpl::getWirelessLink()
 {
@@ -365,10 +394,14 @@ void HalImpl::saveWirelessButtonsData()
   preferences.end();
 }
 
+#endif // #ifdef USE_WIRELESS_LINK
+
 Preferences& HalImpl::getPreferences()
 {
   return m_preferences;
 }
+
+#ifdef USE_LINKS
 
 void HalImpl::sendLinkCommand(int linkNumber, bool useLink, vgs::link::Command command, unsigned int data)
 {
@@ -379,3 +412,5 @@ void HalImpl::sendLinkCommand(int linkNumber, bool useLink, vgs::link::Command c
 
   m_links[linkNumber]->send(command, data);
 }
+
+#endif // #ifdef USE_LINKS

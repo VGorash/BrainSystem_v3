@@ -1,6 +1,8 @@
 #ifndef SETTINGS_APP_H
 #define SETTINGS_APP_H
 
+#include "hardware_config.h"
+
 #include "src/Framework/Core/App.h"
 #include "src/Settings/Settings.h"
 
@@ -35,7 +37,9 @@ private:
   bool m_editMode = false;
 
   bool m_shouldClose = false;
+#ifdef USE_WIRELESS_LINK
   bool m_shouldOpenWirelessApp = false;
+#endif
 
   settings::Settings m_settings;
 

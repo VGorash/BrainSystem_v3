@@ -1,6 +1,10 @@
 #ifndef WIRELESS_PAIRING_APP_H
 #define WIRELESS_PAIRING_APP_H
 
+#include "hardware_config.h"
+
+#ifdef USE_WIRELESS_LINK
+
 #include "src/Framework/Core/App.h"
 #include "src/Framework/Timer.h"
 
@@ -26,5 +30,7 @@ private:
 };
 
 } // namespace vgs
+
+#endif // #ifdef USE_WIRELESS_LINK
 
 #endif

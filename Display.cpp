@@ -3,9 +3,8 @@
 #include "icons.h"
 
 #include "src/Framework/colors.h"
+#include "src/Link/Link.h"
 
-#define SCREEN_WIDTH 480
-#define SCREEN_HEIGHT 320
 #define MAX_ELEMENTS 64
 
 using namespace vgs;
@@ -148,6 +147,7 @@ void startStopButtonUpdate(const DisplayState& state, Element* eRaw)
     return;
   }
 
+#ifdef USE_WIRELESS_LINK
   if(state.mode == DisplayMode::Wireless)
   {
     e->setHidden(false);
@@ -156,6 +156,7 @@ void startStopButtonUpdate(const DisplayState& state, Element* eRaw)
     e->setBorderColor(TFT_RED);
     return;
   }
+#endif
 
   if(String(state.game.name).indexOf("БРЕЙН-РИНГ") >= 0 && state.game.state == GameState::Press)
   {
@@ -184,11 +185,13 @@ void startStopButtonOnClick(DisplayState& state, Element* e)
     return;
   }
 
+#ifdef USE_WIRELESS_LINK
   if(state.mode == DisplayMode::Wireless)
   {
     state.button_state.stop = true;
     return;
   }
+#endif
 
   if(state.game.state == GameState::Idle)
   {
@@ -297,22 +300,59 @@ void mainPanelUpdate(const DisplayState& state, Element* eRaw)
     }
     case GameState::Press:
     {
-      if(state.game.player >= NUM_PLAYERS)
+      int playerNumber = state.game.player;
+
+      // wired buttons
+      if(playerNumber < NUM_WIRED_BUTTONS)
       {
-        e->setText(String("С") + String(state.game.player / 16 + 1) + String("-К") + String(state.game.player % 16 - NUM_PLAYERS + 1));
-      }
-      else
-      {
-        e->setText(String("К") + String(state.game.player + 1));
+        e->setText(String("К") + String(playerNumber + 1));
+        e->setTextColor(color565(colorFromPlayerNumber(playerNumber)));
+        break;
       }
 
-      e->setTextColor(color565(colorFromPlayerNumber(state.game.player % 16 - NUM_PLAYERS)));
+      playerNumber -= NUM_WIRED_BUTTONS;
+
+      // uart buttons
+#ifdef USE_UART_LINKS
+      if(playerNumber < NUM_UART_LINKS * link::Link::maxPlayers)
+      {
+        int linkNumber = playerNumber / link::Link::maxPlayers;
+        int localPlayerNumber = playerNumber % link::Link::maxPlayers;
+        e->setText(String("C") + String(linkNumber + 2) + String("-К") + String(localPlayerNumber + 1));
+        e->setTextColor(color565(colorFromPlayerNumber(playerNumber)));
+        break;
+      }
+#endif
+
+      // wireless buttons
+#ifdef USE_WIRELESS_LINK
+      if(playerNumber < NUM_LINKS * link::Link::maxPlayers)
+      {
+        int localPlayerNumber = playerNumber % link::Link::maxPlayers;
+#ifdef USE_WIRED_BUTTONS
+        e->setText(String("БК") + String(localPlayerNumber + 1)); // if wired and wireless buttons together, we separately mark wireless
+#else
+        e->setText(String("К") + String(localPlayerNumber + 1)); // else use default letter 
+#endif
+        e->setTextColor(color565(colorFromPlayerNumber(playerNumber)));
+        break;
+      }
+#endif
       break;
     }
     case GameState::Falstart:
     {
       e->setText("ФС");
-      e->setTextColor(color565(colorFromPlayerNumber(state.game.player % 16 - NUM_PLAYERS)));
+
+      if(state.game.player < NUM_WIRED_BUTTONS)
+      {
+        e->setTextColor(color565(colorFromPlayerNumber(state.game.player)));
+      }
+      else
+      {
+        e->setTextColor(color565(colorFromPlayerNumber((state.game.player - NUM_WIRED_BUTTONS) % link::Link::maxPlayers)));
+      }
+      
       break;
     }
   }
@@ -418,10 +458,12 @@ void titlePanelUpdate(const DisplayState& state, Element* eRaw)
       e->setText("НАСТРОЙКИ");
     }
   }
+#ifdef USE_WIRELESS_LINK
   if(state.mode == DisplayMode::Wireless)
   {
     e->setText("СОПРЯЖЕНИЕ");
   }
+#endif
 }
 
 TextElement* setupTitlePanel(TextElement* e)
@@ -453,10 +495,16 @@ void settingsIconUpdate(const DisplayState& state, Element* eRaw)
   {
     e->setBitmap(bitmap_back_30_30);
   }
-  else if(state.mode == DisplayMode::Settings || state.mode == DisplayMode::Wireless)
+  else if(state.mode == DisplayMode::Settings)
   {
     e->setBitmap(bitmap_close_30_30);
   }
+#ifdef USE_WIRELESS_LINK
+  else if(state.mode == DisplayMode::Wireless)
+  {
+    e->setBitmap(bitmap_close_30_30);
+  }
+#endif
   else
   {
     e->setBitmap(nullptr);
@@ -472,6 +520,7 @@ BitmapElement* setupSettingsIcon(BitmapElement* e)
   return e;
 }
 
+#ifdef USE_WIRELESS_LINK
 void wirelessIconUpdate(const DisplayState& state, Element* eRaw)
 {
   BitmapElement* e = (BitmapElement*) eRaw;
@@ -507,6 +556,7 @@ BitmapElement* setupWirelessIcon(BitmapElement* e)
   e->setOnPressCallback(wirelessIconOnClick);
   return e;
 }
+#endif
 
 void modePanelUpdate(const DisplayState& state, Element* eRaw)
 {
@@ -565,11 +615,13 @@ void settingsPanelUpdate(const DisplayState& state, Element* eRaw)
       e->setText(state.settings.settings->getCurrentItem().getName());
     }
   }
+#ifdef USE_WIRELESS_LINK
   else if(state.mode == DisplayMode::Wireless)
   {
     e->setHidden(false);
     e->setText(String("Кнопки: ") + String(state.wireless.num_buttons));
   }
+#endif
   else
   {
     e->setHidden(true);
@@ -675,5 +727,7 @@ void Display::initElements()
   TextElement* titlePanel = setupTitlePanel(createTextElement({80, 0, 320, 40}));
   TextElement* modePanel = setupModePanel(createTextElement({400, 0, 80, 40}));
   BitmapElement* setingsIcon = setupSettingsIcon(createBitmapElement({10, 10, 30, 30}));
+#ifdef USE_WIRELESS_LINK
   BitmapElement* wirelessIcon = setupWirelessIcon(createBitmapElement({440, 10, 30, 30}));
+#endif
 }

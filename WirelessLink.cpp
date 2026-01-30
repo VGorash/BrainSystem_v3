@@ -1,5 +1,7 @@
 #include "WirelessLink.h"
 
+#ifdef USE_WIRELESS_LINK
+
 #include "src/Link/Codes.h"
 
 using namespace vgs::link;
@@ -135,7 +137,7 @@ void WirelessLink::onBatteryInfo(const uint8_t* address, uint8_t data)
 {
   if(findButton(address) != -1) // info from button
   {
-    Serial.println(String("Button ") + String(findButton(address)) + ": battery is " + String(data) + String("%"));
+    //Serial.println(String("Button ") + String(findButton(address)) + ": battery is " + String(data) + String("%"));
   }
 }
 
@@ -175,3 +177,4 @@ void WirelessLink::addButton(const uint8_t* address)
   memcpy(m_buttons[m_numButtons++], address, 6);
 }
 
+#endif

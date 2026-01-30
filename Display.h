@@ -5,6 +5,11 @@
 #define I2C_SCL 25
 #define RST_N_PIN 33
 #define INT_N_PIN 39
+#define SCREEN_WIDTH 480
+#define SCREEN_HEIGHT 320
+
+#include "hardware_config.h"
+#include "graphics.h"
 
 #include <TFT_eSPI.h>
 #include <FT6336U.h>
@@ -13,12 +18,10 @@
 
 #include "src/Framework/Core/Hal.h"
 
-#include "graphics.h"
-
-#define NUM_PLAYERS 4
-
 // custom button values
-#define BUTTON_WIRELESS 0
+#ifdef USE_WIRELESS_LINK
+  #define BUTTON_WIRELESS 0
+#endif
 
 class Display
 {

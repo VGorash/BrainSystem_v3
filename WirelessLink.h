@@ -1,6 +1,10 @@
 #ifndef WIRELESS_LINK_H
 #define WIRELESS_LINK_H
 
+#include "hardware_config.h"
+
+#ifdef USE_WIRELESS_LINK
+
 #define USE_ESP_NOW_LINK
 #include "src/Link/EspNowInterface.h"
 #include "src/Link/Link.h"
@@ -44,5 +48,7 @@ private:
   uint8_t m_buttons[6][vgs::link::Link::maxPlayers];
   int m_numButtons = 0;
 };
+
+#endif // #ifdef USE_WIRELESS_LINK
 
 #endif
