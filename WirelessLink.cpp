@@ -124,12 +124,17 @@ void WirelessLink::onPairingRequest(const uint8_t* address, uint8_t data)
 
   if(data == LINK_WIRELESS_DEVICE_BUTTON)
   {
-    if(findButton(address) == -1)
+    int buttonNumber = findButton(address);
+
+    if(buttonNumber == -1) // button is not already paired
     {
-      addButton(address);
+      buttonNumber = addButton(address);
     }
 
-    m_interface->send(address, LINK_WIRELESS_HEADER_PAIRING_RESPONSE, findButton(address));
+    if(buttonNumber != -1) // button had been paired previously or now
+    {
+      m_interface->send(address, LINK_WIRELESS_HEADER_PAIRING_RESPONSE, buttonNumber);
+    }
   }
 }
 
@@ -172,9 +177,16 @@ int WirelessLink::findButton(const uint8_t* address)
   return button;
 }
 
-void WirelessLink::addButton(const uint8_t* address)
+int WirelessLink::addButton(const uint8_t* address)
 {
+  if(m_numButtons + 1 >= Link::maxPlayers)
+  {
+    return -1;
+  }
+  
   memcpy(m_buttons[m_numButtons++], address, 6);
+
+  return m_numButtons;
 }
 
 #endif

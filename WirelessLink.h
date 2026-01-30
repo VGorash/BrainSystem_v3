@@ -36,7 +36,7 @@ private:
   void onBatteryInfo(const uint8_t* address, uint8_t data) override;
 
   int findButton(const uint8_t* address);
-  void addButton(const uint8_t* address);
+  int addButton(const uint8_t* address);
 
 private:
   vgs::link::EspNowInterface* m_interface = nullptr;
@@ -45,7 +45,7 @@ private:
   bool m_dirty = false;
   bool m_pairingEnabled = false;
 
-  uint8_t m_buttons[6][vgs::link::Link::maxPlayers];
+  uint8_t m_buttons[vgs::link::Link::maxPlayers][6];
   int m_numButtons = 0;
 };
 
