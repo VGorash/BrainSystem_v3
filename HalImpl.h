@@ -8,6 +8,7 @@
 
 #include "src/Framework/Core/Hal.h"
 #include "src/Framework/Timer.h"
+#include "src/Framework/colors.h"
 
 #ifdef USE_UART_LINKS
   #define USE_ARDUINO_UART_LINK
@@ -78,8 +79,19 @@ public:
   void saveWirelessButtonsData();
 #endif
 
+  static void convertPlayerNumber(int player, int& outPlayerNumber, int& outLinkNumber);
+
 private:
+  void startBlinkTimer();
+
+#ifdef USE_BUTTON_LEDS
   void blinkLed(int player);
+#endif
+
+#ifdef USE_LED_STRIP
+  void blinkLedStrip(int player);
+  void setLedStripColor(const vgs::Color& color);
+#endif
 
 #ifdef USE_LINKS
   void sendLinkCommand(int linkNumber, bool useLink, vgs::link::Command command, unsigned int data = 0);
@@ -96,6 +108,11 @@ private:
 
 #ifdef USE_WIRED_BUTTONS
   Button m_wiredButtons[NUM_WIRED_BUTTONS];
+#endif
+
+#ifdef USE_LED_STRIP
+  Adafruit_NeoPixel* m_ledStrip;
+  vgs::Color m_blinkingStripColor;
 #endif
 
 #ifdef USE_BUTTON_LEDS

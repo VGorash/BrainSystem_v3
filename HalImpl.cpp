@@ -11,6 +11,10 @@ HalImpl::HalImpl()
     m_links[i] = nullptr;
   }
 #endif
+
+#ifdef USE_LED_STRIP
+  m_ledStrip = new Adafruit_NeoPixel(LED_STRIP_LEDS_COUNT, LED_STRIP_PIN, LED_STRIP_COLOR_ORDER + LED_STRIP_FREQUENCY);
+#endif
 }
 
 HalImpl::~HalImpl()
@@ -20,6 +24,10 @@ HalImpl::~HalImpl()
   {
     delete m_links[i];
   }
+#endif
+
+#ifdef USE_LED_STRIP
+  delete m_ledStrip;
 #endif
 }
 
@@ -43,6 +51,13 @@ void HalImpl::init()
 
 #ifdef USE_SIGNAL_LED
   pinMode(SIGNAL_LED_PIN, OUTPUT);
+#endif
+
+#ifdef USE_LED_STRIP
+  m_ledStrip->begin();
+  m_ledStrip->setBrightness(LED_STRIP_BRIGHNTESS);
+  m_ledStrip->clear();
+  m_ledStrip->show();
 #endif
 
 #ifdef USE_UART_LINKS
@@ -81,6 +96,18 @@ void HalImpl::tick()
       {
         digitalWrite(buttonLedPins[i], m_blinkState);
       }
+    }
+#endif
+
+#ifdef USE_LED_STRIP 
+    if(m_blinkState)
+    {
+      setLedStripColor(m_blinkingStripColor);
+    }
+    else
+    {
+      m_ledStrip->clear();
+      m_ledStrip->show();
     }
 #endif
   }
@@ -137,83 +164,125 @@ ButtonState HalImpl::getButtonState()
   return s;
 }
 
-void HalImpl::correctPressSignal(int player)
+// return link number and player number in link, if link = -1, player is local
+void HalImpl::convertPlayerNumber(int player, int& outPlayerNumber, int& outLinkNumber)
 {
   if (player < 0)
   {
+    outLinkNumber = -1;
+    outPlayerNumber = -1; // incorrect player
     return;
   }
 
-#ifdef USE_BUTTON_LEDS
-  if(player < NUM_WIRED_BUTTONS)
+  if(player < NUM_WIRED_BUTTONS) // local player
   {
-    digitalWrite(buttonLedPins[player], 1);
+    outLinkNumber = -1; // local player
+    outPlayerNumber = player;
     return;
+  }
+  
+  // remote player
+  player -= NUM_WIRED_BUTTONS;
+
+  if(player >= link::Link::maxPlayers * NUM_LINKS) // incorrect player number (link limit)
+  {
+    outLinkNumber = -1;
+    outPlayerNumber = -1;  // incorrect player
+    return;
+  }
+
+  outLinkNumber = player / link::Link::maxPlayers;
+  outPlayerNumber = player % link::Link::maxPlayers;
+}
+
+void HalImpl::correctPressSignal(int player)
+{
+  int linkNumber, playerNumber;
+  convertPlayerNumber(player, playerNumber, linkNumber);
+
+  if (playerNumber < 0) // incorrect player
+  {
+    return;
+  }
+
+#ifdef USE_LINKS
+  for (int i=0; i<NUM_LINKS; i++)
+  {
+    sendLinkCommand(i, true, link::Command::DisplayCorrectPressSignal, playerNumber);
   }
 #endif
 
-  player -= NUM_WIRED_BUTTONS;
+#ifdef USE_LED_STRIP
+  setLedStripColor(colorFromPlayerNumber(playerNumber));
+#endif
+
+  if(linkNumber < 0) // localPlayer
+  {
+#ifdef USE_BUTTON_LEDS
+    digitalWrite(buttonLedPins[playerNumber], 1);
+#endif
+    return;
+  }
 
 #ifdef USE_LINKS
-  if(player < link::Link::maxPlayers * NUM_LINKS)
-  {
-    sendLinkCommand(player / link::Link::maxPlayers, true, link::Command::CorrectPressSignal, player % link::Link::maxPlayers);
-  }
-
-  for (int i=0; i<NUM_LINKS; i++)
-  {
-    sendLinkCommand(i, true, link::Command::DisplayCorrectPressSignal, player % link::Link::maxPlayers);
-  }
+  sendLinkCommand(linkNumber, true, link::Command::CorrectPressSignal, playerNumber);
 #endif
 }
 
 void HalImpl::falstartPressSignal(int player)
 {
-  if (player < 0)
+  int linkNumber, playerNumber;
+  convertPlayerNumber(player, playerNumber, linkNumber);
+
+  if (playerNumber < 0) // incorrect player
   {
     return;
   }
-
-  if(player < NUM_WIRED_BUTTONS)
-  {
-    blinkLed(player);
-    return;
-  }
-
-  player -= NUM_WIRED_BUTTONS;
 
 #ifdef USE_LINKS
-  if(player < link::Link::maxPlayers * NUM_LINKS)
-  {
-    sendLinkCommand(player / link::Link::maxPlayers, true, link::Command::FalstartPressSignal, player % link::Link::maxPlayers);
-  }
-
   for (int i=0; i<NUM_LINKS; i++)
   {
-    sendLinkCommand(i, true, link::Command::DisplayFalstartPressSignal, player % link::Link::maxPlayers);
+    sendLinkCommand(i, true, link::Command::DisplayFalstartPressSignal, playerNumber);
   }
+#endif
+
+#ifdef USE_LED_STRIP
+  blinkLedStrip(playerNumber);
+#endif
+
+  if(linkNumber < 0) // localPlayer
+  {
+#ifdef USE_BUTTON_LEDS
+    blinkLed(playerNumber);
+#endif
+    return;
+  }
+
+#ifdef USE_LINKS
+  sendLinkCommand(linkNumber, true, link::Command::FalstartPressSignal, playerNumber);
 #endif
 }
 
 void HalImpl::pendingPressSignal(int player)
 {
-  if (player < 0)
+  int linkNumber, playerNumber;
+  convertPlayerNumber(player, playerNumber, linkNumber);
+
+  if (playerNumber < 0) // incorrect player
   {
-    return;
-  }
-  if(player < NUM_WIRED_BUTTONS)
-  {
-    blinkLed(player);
     return;
   }
 
-  player -= NUM_WIRED_BUTTONS;
+  if(linkNumber < 0) // localPlayer
+  {
+#ifdef USE_BUTTON_LEDS
+    blinkLed(playerNumber);
+#endif
+    return;
+  }
 
 #ifdef USE_LINKS
-  if(player < link::Link::maxPlayers * NUM_LINKS)
-  {
-    sendLinkCommand(player / link::Link::maxPlayers, true, link::Command::PendingPressSignal, player % link::Link::maxPlayers);
-  }
+  sendLinkCommand(linkNumber, true, link::Command::PendingPressSignal, playerNumber);
 #endif
 }
 
@@ -223,6 +292,10 @@ void HalImpl::gameStartSignal()
   {
 #ifdef USE_SIGNAL_LED
     digitalWrite(SIGNAL_LED_PIN, 1);
+#endif
+
+#ifdef USE_LED_STRIP
+    setLedStripColor({255, 255, 255}); // white
 #endif
   }
 
@@ -238,6 +311,11 @@ void HalImpl::clearSignals()
 {
 #ifdef USE_SIGNAL_LED
   digitalWrite(SIGNAL_LED_PIN, 0);
+#endif
+
+#ifdef USE_LED_STRIP
+    m_ledStrip->clear();
+    m_ledStrip->show();
 #endif
 
 #ifdef USE_BUTTON_LEDS
@@ -263,13 +341,26 @@ void HalImpl::setSignalLightEnabled(bool enabled)
   m_signalLightEnabled = enabled;
 }
 
+#ifdef USE_BUTTON_LEDS
 void HalImpl::blinkLed(int player)
 {
-#ifdef USE_BUTTON_LEDS
-  digitalWrite(buttonLedPins[player], 1);
+  startBlinkTimer();
+  digitalWrite(buttonLedPins[player], m_blinkState);
   m_blinkingLeds[player] = true;
+}
 #endif
 
+#ifdef USE_LED_STRIP
+void HalImpl::blinkLedStrip(int player)
+{
+  startBlinkTimer();
+  m_blinkingStripColor = colorFromPlayerNumber(player);
+  setLedStripColor(m_blinkingStripColor);
+}
+#endif
+
+void HalImpl::startBlinkTimer()
+{
   if(!m_blinkTimer.isStarted())
   {
     m_blinkState = 1;
@@ -402,7 +493,6 @@ Preferences& HalImpl::getPreferences()
 }
 
 #ifdef USE_LINKS
-
 void HalImpl::sendLinkCommand(int linkNumber, bool useLink, vgs::link::Command command, unsigned int data)
 {
   if(!useLink || linkNumber >= NUM_LINKS)
@@ -412,5 +502,18 @@ void HalImpl::sendLinkCommand(int linkNumber, bool useLink, vgs::link::Command c
 
   m_links[linkNumber]->send(command, data);
 }
-
 #endif // #ifdef USE_LINKS
+
+#ifdef USE_LED_STRIP
+void HalImpl::setLedStripColor(const vgs::Color& color)
+{
+  uint32_t colorEncoded = m_ledStrip->Color(color.r, color.g, color.b);
+
+  for (int i = 0; i < m_ledStrip->numPixels(); i++)
+  {
+    m_ledStrip->setPixelColor(i, colorEncoded);
+  }
+
+  m_ledStrip->show();
+}
+#endif // #ifdef USE_LED_STRIP

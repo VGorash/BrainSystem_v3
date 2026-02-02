@@ -1,4 +1,5 @@
 #include "Display.h"
+#include "HalImpl.h"
 #include "binaryttf.h"
 #include "icons.h"
 
@@ -300,25 +301,27 @@ void mainPanelUpdate(const DisplayState& state, Element* eRaw)
     }
     case GameState::Press:
     {
-      int playerNumber = state.game.player;
+      int playerNumber, linkNumber;
+      HalImpl::convertPlayerNumber(state.game.player, playerNumber, linkNumber);
+
+      if(playerNumber < 0) // incorrect player
+      {
+        break;
+      }
 
       // wired buttons
-      if(playerNumber < NUM_WIRED_BUTTONS)
+      if(linkNumber < 0)
       {
         e->setText(String("К") + String(playerNumber + 1));
         e->setTextColor(color565(colorFromPlayerNumber(playerNumber)));
         break;
       }
 
-      playerNumber -= NUM_WIRED_BUTTONS;
-
       // uart buttons
 #ifdef USE_UART_LINKS
-      if(playerNumber < NUM_UART_LINKS * link::Link::maxPlayers)
+      if(linkNumber < NUM_UART_LINKS)
       {
-        int linkNumber = playerNumber / link::Link::maxPlayers;
-        int localPlayerNumber = playerNumber % link::Link::maxPlayers;
-        e->setText(String("C") + String(linkNumber + 2) + String("-К") + String(localPlayerNumber + 1));
+        e->setText(String("C") + String(linkNumber + 2) + String("-К") + String(playerNumber + 1));
         e->setTextColor(color565(colorFromPlayerNumber(playerNumber)));
         break;
       }
@@ -326,13 +329,12 @@ void mainPanelUpdate(const DisplayState& state, Element* eRaw)
 
       // wireless buttons
 #ifdef USE_WIRELESS_LINK
-      if(playerNumber < NUM_LINKS * link::Link::maxPlayers)
+      if(linkNumber == NUM_LINKS - 1)
       {
-        int localPlayerNumber = playerNumber % link::Link::maxPlayers;
 #ifdef USE_WIRED_BUTTONS
-        e->setText(String("БК") + String(localPlayerNumber + 1)); // if wired and wireless buttons together, we separately mark wireless
+        e->setText(String("БК") + String(playerNumber + 1)); // if wired and wireless buttons together, we separately mark wireless
 #else
-        e->setText(String("К") + String(localPlayerNumber + 1)); // else use default letter 
+        e->setText(String("К") + String(playerNumber + 1)); // else use default letter 
 #endif
         e->setTextColor(color565(colorFromPlayerNumber(playerNumber)));
         break;
@@ -342,17 +344,16 @@ void mainPanelUpdate(const DisplayState& state, Element* eRaw)
     }
     case GameState::Falstart:
     {
-      e->setText("ФС");
 
-      if(state.game.player < NUM_WIRED_BUTTONS)
+      int playerNumber, linkNumber;
+      HalImpl::convertPlayerNumber(state.game.player, playerNumber, linkNumber);
+
+      if(playerNumber > 0)
       {
-        e->setTextColor(color565(colorFromPlayerNumber(state.game.player)));
+        e->setText("ФС");
+        e->setTextColor(color565(colorFromPlayerNumber(playerNumber)));
       }
-      else
-      {
-        e->setTextColor(color565(colorFromPlayerNumber((state.game.player - NUM_WIRED_BUTTONS) % link::Link::maxPlayers)));
-      }
-      
+
       break;
     }
   }

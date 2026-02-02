@@ -49,11 +49,16 @@
 
 // Sound
 #define BUZZER_PIN 18
+// ---------------------
 
 // LED strip (multi-color addresable LED strip, can replace signal LED and button LEDs)
 #ifdef USE_LED_STRIP
+  #include <Adafruit_NeoPixel.h>
   #define LED_STRIP_PIN 21
-  #define LEDS_IN_STRIP 8
+  #define LED_STRIP_LEDS_COUNT 8
+  #define LED_STRIP_FREQUENCY NEO_KHZ800
+  #define LED_STRIP_COLOR_ORDER NEO_GRB
+  #define LED_STRIP_BRIGHNTESS 32 // from 0 to 255
 #endif
 // ---------------------
 
@@ -89,7 +94,7 @@
 
 // Battery
 #ifdef USE_BATTERY
-  #define BATTERY_VOLTAGE_PIN 7
+  #define BATTERY_VOLTAGE_PIN 4
 #endif
 // ---------------------
 
