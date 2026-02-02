@@ -38,6 +38,17 @@ unsigned int WirelessLink::getData()
   return m_data;
 }
 
+constexpr int numBroadcastCommands = 5;
+const Command broadcastCommands[numBroadcastCommands] =
+{
+  Command::DisplayCorrectPressSignal,
+  Command::DisplayFalstartPressSignal,
+  Command::GameStartSignal,
+  Command::Clear,
+  Command::UpdateTime
+};
+const uint8_t broadcastAddress[] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
+
 void WirelessLink::send(Command command, unsigned int data)
 {
   unsigned char code;
@@ -47,13 +58,13 @@ void WirelessLink::send(Command command, unsigned int data)
     return;
   }
 
-  if(command == Command::Clear) // broadcast
+  for(int i=0; i<numBroadcastCommands; i++)
   {
-    for(int i=0; i<m_numButtons; i++)
+    if(command == broadcastCommands[i])
     {
-      m_interface->send(m_buttons[i], LINK_WIRELESS_HEADER_COMMAND_V2, code);
+      m_interface->send(broadcastAddress, LINK_WIRELESS_HEADER_COMMAND_V2, code);
+      return;
     }
-    return;
   }
 
   if(data < m_numButtons)
