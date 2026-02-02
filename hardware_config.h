@@ -2,6 +2,7 @@
 #define HARDWARE_CONFIG_H
 
 // CHANGEABLE PARAMETERS
+
 #define USE_WIRED_BUTTONS   // Comment if wired buttons aren't used
 #define USE_BUTTON_LEDS     // Comment if button LEDs aren't used
 #define USE_SIGNAL_LED      // Comment if signal LED isn't used
@@ -94,7 +95,12 @@
 
 // Battery
 #ifdef USE_BATTERY
-  #define BATTERY_VOLTAGE_PIN 4
+  #define BATTERY_VOLTAGE_R1 270000 // 270k resistor
+  #define BATTERY_VOLTAGE_R2 270000 // 270k resistor
+  #define BATTERY_VOLTAGE_PIN 34
+  #define BATTERY_CHECK_TIME 5000 // every 5 seconds
+  #define BATTERY_EMPTY_VOLTAGE 3.3
+  #define BATTERY_FULL_VOLTAGE 4.2
 #endif
 // ---------------------
 

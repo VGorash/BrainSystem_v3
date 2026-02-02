@@ -33,6 +33,7 @@ HalImpl::~HalImpl()
 
 void HalImpl::init()
 {
+  Serial.begin(9600);
   m_display.init();
 
 #ifdef USE_WIRED_BUTTONS
@@ -74,6 +75,18 @@ void HalImpl::init()
   wirelessLink->init();
   m_links[NUM_LINKS - 1] = wirelessLink; // wireless link is always last
   loadWirelessButtonsData();
+#endif
+
+#ifdef USE_BATTERY
+  pinMode(BATTERY_VOLTAGE_PIN, INPUT);
+  analogReadResolution(12);
+  analogSetPinAttenuation(BATTERY_VOLTAGE_PIN, ADC_11db);
+  m_batteryCheckTimer.setTime(BATTERY_CHECK_TIME);
+  m_batteryCheckTimer.setPeriodMode(true);
+  m_batteryCheckTimer.start(*this);
+  loadBatteryCalibrationData();
+  measureBatteryVoltage();
+  updateBatteryPercent();
 #endif
 
   m_blinkTimer.setTime(500);
@@ -128,6 +141,15 @@ void HalImpl::tick()
   for (int i=0; i<NUM_LINKS; i++)
   {
     m_links[i]->tick();
+  }
+#endif
+
+#ifdef USE_BATTERY
+  measureBatteryVoltage();
+
+  if(m_batteryCheckTimer.tick(*this))
+  {
+    updateBatteryPercent();
   }
 #endif
 }
@@ -397,14 +419,22 @@ void HalImpl::updateDisplay(const GameDisplayInfo& info)
   DisplayState s;
   s.mode = DisplayMode::Game;
   s.game = info;
+#ifdef USE_BATTERY
+  s.batteryPercent = m_batteryPercent;
+#endif
   m_display.sync(s);
 }
 
 void HalImpl::updateDisplay(const CustomDisplayInfo& info)
 {
+  DisplayState s;
+
+#ifdef USE_BATTERY
+  s.batteryPercent = m_batteryPercent;
+#endif
+
   if(info.type == DisplayInfoSettings)
   {
-    DisplayState s;
     s.mode = DisplayMode::Settings;
     s.settings = *((SettingsDisplayInfo*)info.data);
     m_display.sync(s);
@@ -413,7 +443,6 @@ void HalImpl::updateDisplay(const CustomDisplayInfo& info)
 #ifdef USE_WIRELESS_LINK
   else if(info.type == DisplayInfoWireless)
   {
-    DisplayState s;
     s.mode = DisplayMode::Wireless;
     s.wireless = *((WirelessDisplayInfo*)info.data);
     m_display.sync(s);
@@ -517,3 +546,35 @@ void HalImpl::setLedStripColor(const vgs::Color& color)
   m_ledStrip->show();
 }
 #endif // #ifdef USE_LED_STRIP
+
+#ifdef USE_BATTERY
+
+constexpr const char* batteryNamespaceKey = "battery";
+constexpr const char* batterySlopeKey = "slope";
+constexpr const char* batteryOffsetKey = "offset";
+
+void HalImpl::loadBatteryCalibrationData()
+{
+  m_preferences.begin(batteryNamespaceKey, true);
+  m_batteryCalibrationSlope = m_preferences.getFloat(batterySlopeKey, 2.5f / 4095.0f);
+  m_batteryCalibrationOffset = m_preferences.getFloat(batteryOffsetKey, 0.0f);
+  m_preferences.end();
+}
+
+void HalImpl::measureBatteryVoltage()
+{
+  constexpr float dividerRatio = (BATTERY_VOLTAGE_R1 + BATTERY_VOLTAGE_R2) / BATTERY_VOLTAGE_R2;
+  m_batteryVoltageSum += dividerRatio * (analogRead(BATTERY_VOLTAGE_PIN) * m_batteryCalibrationSlope + m_batteryCalibrationOffset);
+  m_batteryChecksCount += 1;
+}
+
+void HalImpl::updateBatteryPercent()
+{
+  float batteryVoltage = m_batteryVoltageSum / m_batteryChecksCount;
+  int percentage = (int)((batteryVoltage - BATTERY_EMPTY_VOLTAGE) / (BATTERY_FULL_VOLTAGE - BATTERY_EMPTY_VOLTAGE) * 100);
+  m_batteryPercent = constrain(percentage, 0, 100);
+  m_batteryVoltageSum = 0;
+  m_batteryChecksCount = 0;
+}
+
+#endif // #ifdef USE_BATTERY

@@ -559,6 +559,43 @@ BitmapElement* setupWirelessIcon(BitmapElement* e)
 }
 #endif
 
+#ifdef USE_BATTERY
+void batteryIconUpdate(const DisplayState& state, Element* eRaw)
+{
+  BitmapElement* e = (BitmapElement*) eRaw;
+
+  e->setHidden(false);
+
+  if(state.batteryPercent > 70)
+  {
+    e->setBitmapColor(TFT_WHITE);
+    e->setBitmap(bitmap_battery_100_p_14_30);
+  }
+  else if(state.batteryPercent > 40)
+  {
+    e->setBitmapColor(TFT_WHITE);
+    e->setBitmap(bitmap_battery_60_p_14_30);
+  }
+  else if(state.batteryPercent > 10)
+  {
+    e->setBitmapColor(TFT_WHITE);
+    e->setBitmap(bitmap_battery_30_p_14_30);
+  }
+  else
+  {
+    e->setBitmapColor(TFT_RED);
+    e->setBitmap(bitmap_battery_0_p_14_30);
+  }
+}
+
+BitmapElement* setupBatteryIcon(BitmapElement* e)
+{
+  e->setBackgroundColor(COMMON_BACKGROUND_COLOR);
+  e->setUpdateCallback(batteryIconUpdate);
+  return e;
+}
+#endif
+
 void modePanelUpdate(const DisplayState& state, Element* eRaw)
 {
   TextElement* e = (TextElement*) eRaw;
@@ -728,6 +765,9 @@ void Display::initElements()
   TextElement* titlePanel = setupTitlePanel(createTextElement({80, 0, 320, 40}));
   TextElement* modePanel = setupModePanel(createTextElement({400, 0, 80, 40}));
   BitmapElement* setingsIcon = setupSettingsIcon(createBitmapElement({10, 10, 30, 30}));
+#ifdef USE_BATTERY
+  BitmapElement* batteryIcon = setupBatteryIcon(createBitmapElement({60, 10, 14, 30}));
+#endif
 #ifdef USE_WIRELESS_LINK
   BitmapElement* wirelessIcon = setupWirelessIcon(createBitmapElement({440, 10, 30, 30}));
 #endif

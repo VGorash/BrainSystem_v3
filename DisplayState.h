@@ -37,6 +37,9 @@ typedef struct DisplayState
 #ifdef USE_WIRELESS_LINK
   WirelessDisplayInfo wireless;
 #endif
+#ifdef USE_BATTERY
+  int batteryPercent;
+#endif
 
   // ---- STATE ----
   bool dirty = true;

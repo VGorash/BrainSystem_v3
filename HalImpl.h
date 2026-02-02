@@ -97,6 +97,12 @@ private:
   void sendLinkCommand(int linkNumber, bool useLink, vgs::link::Command command, unsigned int data = 0);
 #endif
 
+#ifdef USE_BATTERY
+  void loadBatteryCalibrationData();
+  void measureBatteryVoltage();
+  void updateBatteryPercent();
+#endif
+
 private:  
   Display m_display;
   vgs::Timer m_blinkTimer;
@@ -121,6 +127,15 @@ private:
 
 #ifdef USE_LINKS
   vgs::link::Link* m_links[NUM_LINKS];
+#endif
+
+#ifdef USE_BATTERY
+  float m_batteryCalibrationSlope = 2.5f / 4095.0f;
+  float m_batteryCalibrationOffset = 0.0f;
+  float m_batteryVoltageSum = 0;
+  int m_batteryPercent = 0;
+  int m_batteryChecksCount = 0;
+  vgs::Timer m_batteryCheckTimer;
 #endif
 };
 
