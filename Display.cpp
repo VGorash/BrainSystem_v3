@@ -348,7 +348,7 @@ void mainPanelUpdate(const DisplayState& state, Element* eRaw)
       int playerNumber, linkNumber;
       HalImpl::convertPlayerNumber(state.game.player, playerNumber, linkNumber);
 
-      if(playerNumber > 0)
+      if(playerNumber >= 0)
       {
         e->setText("ФС");
         e->setTextColor(color565(colorFromPlayerNumber(playerNumber)));
