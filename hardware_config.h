@@ -49,7 +49,7 @@
 // ---------------------
 
 // Sound
-#define BUZZER_PIN 18
+#define BUZZER_PIN 26 // for old hardware change to 18
 // ---------------------
 
 // LED strip (multi-color addresable LED strip, can replace signal LED and button LEDs)
@@ -69,8 +69,8 @@
   #define NUM_UART_LINKS 3
   #define UART0_RX_PIN 3
   #define UART0_TX_PIN 1
-  #define UART1_RX_PIN 27
-  #define UART1_TX_PIN 26
+  #define UART1_RX_PIN 36 // for old hardware change to 27
+  #define UART1_TX_PIN 27 // for old hardware change to 26
   #define UART2_RX_PIN 16
   #define UART2_TX_PIN 17
   static const int uartRxPins[NUM_UART_LINKS] = {UART0_RX_PIN, UART1_RX_PIN, UART2_RX_PIN};
