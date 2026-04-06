@@ -419,9 +419,21 @@ void HalImpl::updateDisplay(const GameDisplayInfo& info)
   DisplayState s;
   s.mode = DisplayMode::Game;
   s.game = info;
+
 #ifdef USE_BATTERY
   s.batteryPercent = m_batteryPercent;
 #endif
+
+#ifdef USE_LINKS
+  if(info.state == GameState::Countdown && info.gameTime >= 0)
+  {
+    for (int i=0; i<NUM_LINKS; i++)
+    {
+      sendLinkCommand(i, true, link::Command::UpdateTime, info.gameTime);
+    }
+  }
+#endif
+
   m_display.sync(s);
 }
 
